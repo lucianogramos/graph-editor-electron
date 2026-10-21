@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Primeiro App Electron</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            padding-top: 50px;
+        }
+        h1 { color: #2b6cb0; }
+        .info {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>Olá, Mundo do Electron! 👋</h1>
+        <p>Este aplicativo está rodando com:</p>
+        <p><strong>Node.js:</strong> <span id="node-version"></span></p>
+        <p><strong>Electron:</strong> <span id="electron-version"></span></p>
+        <p><strong>Chromium:</strong> <span id="chrome-version"></span></p>
+    </div>
+
+    <script>
+        // Utilizando a API segura exposta pelo preload.js
+        document.getElementById('node-version').innerText = window.versions.node();
+        document.getElementById('electron-version').innerText = window.versions.electron();
+        document.getElementById('chrome-version').innerText = window.versions.chrome();
+    </script>
+</body>
+</html>

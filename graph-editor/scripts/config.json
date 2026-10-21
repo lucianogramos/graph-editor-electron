@@ -1,0 +1,4 @@
+{
+    "files": ["../src/renderer/index.html"],
+    "dest": "../dist/renderer/"
+}
