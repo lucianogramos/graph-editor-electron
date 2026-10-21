@@ -6,5 +6,5 @@
     "rootDir": "./src/renderer",
     "outDir": "./dist/renderer"
   },
-  "include": ["src/renderer/**/*", "src/types/**/*.d.ts"]
+  "include": ["src/renderer/**/*", "src/types/**/*"]
 }
