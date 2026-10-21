@@ -1,23 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
-
-type Theme = 'light' | 'dark';
-interface ThemeColors {
-    titleBarColor: string;
-    titleBarSymbolColor: string;
-}
-
-let theme: Theme = 'light';
-const colors: Record<Theme, ThemeColors> = {
-    light: {
-        titleBarColor: '#F5FBFF',
-        titleBarSymbolColor: '#1D1D1D'
-    },
-    dark: {
-        titleBarColor: '#1D1D1D',
-        titleBarSymbolColor: '#F5FBFF'
-    }
-}
+import { themeService } from './components/themes/theme-gateway';
 
 const createWindow = (): void => {
     const mainWindow = new BrowserWindow({
@@ -26,8 +9,8 @@ const createWindow = (): void => {
             titleBarStyle: 'hidden',
             // Mantém os botões nativos, mas permite estilizar a barra de fundo e os ícones
             titleBarOverlay: {
-                color: colors[theme].titleBarColor,
-                symbolColor: colors[theme].titleBarSymbolColor,
+                color: themeService.getCurrentThemeColors().titleBarColor,
+                symbolColor: themeService.getCurrentThemeColors().titleBarSymbolColor,
                 height: 35
             },
             webPreferences: {
@@ -36,6 +19,16 @@ const createWindow = (): void => {
             nodeIntegration: false
         }
     });
+
+    mainWindow.webContents.on('before-input-event', (_, input) => {
+        if (input.type == 'keyDown' && input.key.toLowerCase() === 'e') {
+            themeService.toggleCurrentTheme();
+            mainWindow.setTitleBarOverlay({
+                color: themeService.getCurrentThemeColors().titleBarColor,
+                symbolColor: themeService.getCurrentThemeColors().titleBarSymbolColor 
+            })
+        }
+    })
 
     // Carrega o arquivo HTML localizado na raiz do projeto
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));

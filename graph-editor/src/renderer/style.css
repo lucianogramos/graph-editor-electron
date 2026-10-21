@@ -174,7 +174,7 @@
   }
 }
 :root {
-  --surface-color-1: oklch(98.47% 0.0083 236.56);
+  --surface-color-1: #F5FBFF;
   --surface-color-2: oklch(94.47% 0.0083 236.56);
 }
 body {
