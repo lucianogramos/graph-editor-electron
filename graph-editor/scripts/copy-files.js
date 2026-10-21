@@ -25,6 +25,8 @@ if (dest === undefined || typeof dest !== 'string') {
 const destDir = path.join(__dirname, dest);
 fs.mkdirSync(destDir, { recursive: true });
 
+console.log()
+
 for (const fileName of files) {
     if (typeof fileName !== 'string') {
         console.log(`The '${fileName}' file was ignored because it is not a string`)

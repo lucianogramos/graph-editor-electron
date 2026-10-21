@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+:root {
+    --surface-color-1: #F5FBFF;
+    --surface-color-2: oklch(94.47% 0.0083 236.56);
+}
+
+body {
+    user-select: none;
+}
+
+#title-bar {
+    height: 35px;
+    background-color: var(--surface-color-1);
+    -webkit-app-region: drag;
+}
+
+@theme inline {
+    --color-surface-1: var(--surface-color-1);
+    --color-surface-2: var(--surface-color-2);
+}

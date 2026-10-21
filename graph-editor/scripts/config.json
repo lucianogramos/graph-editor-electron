@@ -1,4 +1,4 @@
 {
-    "files": ["../src/renderer/index.html"],
+    "files": ["../src/renderer/index.html", "../src/renderer/style.css"],
     "dest": "../dist/renderer/"
 }
