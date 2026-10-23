@@ -30,7 +30,7 @@ const createWindow = (): void => {
                 symbolColor: themeService.getCurrentThemeColors().titleBarSymbolColor 
             })
         }
-    })
+    });
 
     // Carrega o arquivo HTML localizado na raiz do projeto
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
