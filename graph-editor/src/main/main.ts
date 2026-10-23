@@ -6,6 +6,8 @@ const createWindow = (): void => {
     const mainWindow = new BrowserWindow({
             width: 800,
             height: 600,
+            minWidth: 480,
+            minHeight: 270,
             titleBarStyle: 'hidden',
             // Mantém os botões nativos, mas permite estilizar a barra de fundo e os ícones
             titleBarOverlay: {

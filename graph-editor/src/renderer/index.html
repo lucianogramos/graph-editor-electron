@@ -6,9 +6,75 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="h-dvh w-dvw bg-surface-2">
-        <header id="title-bar" class=""></header>
-        <p>teste</p>
+    <div id="root">
+        <header id="title-bar">
+            <div class="relative">
+                <button class="title-bar-option" data-dropdown-trigger="file-menu">Arquivo</button>
+                
+                <div id="file-menu" class="title-bar-dropdown-menu">
+                    <div class="title-bar-dropdown-menu-section">
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Novo Grafo</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + N</span>
+                        </button>
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Abrir Grafo...</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + O</span>
+                        </button>
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Salvar Grafo</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + S</span>
+                        </button>
+                        <button class="title-bar-dropdown-menu-option">Sair</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button class="title-bar-option" data-dropdown-trigger="edit-menu">Editar</button>
+                
+                <div id="edit-menu" class="title-bar-dropdown-menu">
+                    <div class="title-bar-dropdown-menu-section">
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Desfazer</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + Z</span>
+                        </button>
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Refazer</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + Y</span>
+                        </button>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="title-bar-dropdown-menu-section">
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Adicionar Vértice</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + B</span>
+                        </button>
+                        <button class="title-bar-dropdown-menu-option">
+                            <span>Adicionar Aresta</span>
+                            <span class="title-bar-dropdown-menu-option-shortcut">CTRL + E</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative">
+                <button class="title-bar-option" data-dropdown-trigger="algorithms-menu">Algoritmos</button>
+                
+                <div id="algorithms-menu" class="title-bar-dropdown-menu">
+                    <div class="title-bar-dropdown-menu-section">
+                        <button class="title-bar-dropdown-menu-option">DFS</button>
+                        <button class="title-bar-dropdown-menu-option">BFS</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div id="main-container" class="w-full h-full flex gap-2 p-2">
+            <div class="h-full w-40 border border-accent rounded-lg">
+
+            </div>
+            <div class="h-full w-full border border-accent rounded-lg"></div>
+        </div>
     </div>
     <script type="module" src="./renderer.js"></script>
 </body>
