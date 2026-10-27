@@ -1,4 +1,9 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import { Api } from '../types/ipc';
+import { IPC_CHANNELS } from '../shared/channels';
 
-// Expõe a API de forma segura para o objeto 'window'
-// contextBridge.exposeInMainWorld('versions', versionsApi);
+const api: Api = {
+    quit: () => ipcRenderer.send(IPC_CHANNELS.QUIT)
+};
+
+contextBridge.exposeInMainWorld('api', api);

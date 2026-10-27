@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, ipcMain, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { themeService } from './components/themes/theme-gateway';
+import { IPC_CHANNELS } from '../shared/channels';
 
 const createWindow = (): void => {
     const mainWindow = new BrowserWindow({
@@ -50,4 +51,8 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+ipcMain.on(IPC_CHANNELS.QUIT, () => {
+    app.quit();
 });

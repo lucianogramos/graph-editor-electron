@@ -1,5 +1,9 @@
+import { Api } from './ipc'
+
 declare global {
     interface Window {
-        versions: IElectronVersions;
+        api: Api
     }
 }
+
+export {};

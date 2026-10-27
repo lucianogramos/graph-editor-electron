@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["ESNext"],
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "types": ["node"] 
+  },
+  "include": ["src/preload/**/*", "src/shared/**/*", "src/types/ipc.ts"]
+}
