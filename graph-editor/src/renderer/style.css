@@ -234,6 +234,9 @@
   .resize {
     resize: both;
   }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
   .flex-col {
     flex-direction: column;
   }
