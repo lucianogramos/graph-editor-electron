@@ -3,5 +3,10 @@
         "target": "ES2022",
         "strict": true,
         "skipLibCheck": true
-    }
+    },
+    "files": [],
+    "references": [
+        { "path": "./tsconfig.main.json" },
+        { "path": "./tsconfig.renderer.json" }
+    ]
 }

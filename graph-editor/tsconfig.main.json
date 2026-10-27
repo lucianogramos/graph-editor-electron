@@ -3,8 +3,10 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "lib": ["ESNext"],
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "types": ["node"] 
   },
   "include": ["src/main/**/*", "src/preload/**/*"]
 }

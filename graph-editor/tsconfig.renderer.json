@@ -3,8 +3,10 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "rootDir": "./src/renderer",
-    "outDir": "./dist/renderer"
+    "outDir": "./dist/renderer",
+    "types": []
   },
   "include": ["src/renderer/**/*", "src/types/**/*"]
 }
