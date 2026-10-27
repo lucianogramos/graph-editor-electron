@@ -39,6 +39,12 @@ svg {
     -webkit-app-region: drag;
 }
 
+#editor {
+    background-image: url('../../img/CircleEditorBackground.svg');
+    background-repeat: repeat;
+    background-size: calc(var(--spacing) * 3);
+}
+
 @theme inline {
     --color-surface-1: var(--surface-color-1);
     --color-surface-2: var(--surface-color-2);

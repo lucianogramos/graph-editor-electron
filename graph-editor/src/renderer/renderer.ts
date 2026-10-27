@@ -35,7 +35,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Impede que cliques *dentro* de qualquer menu flutuante fechem ele prematuramente
 document.querySelectorAll('.title-bar-dropdown-menu').forEach((menu) => {
     menu.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -43,7 +42,6 @@ document.querySelectorAll('.title-bar-dropdown-menu').forEach((menu) => {
 });
 
 const editorElem = document.getElementById("editor") as HTMLDivElement;
-console.log(editorElem.clientWidth, editorElem.clientHeight);
 
 const stage = new Konva.Stage({
     container: editorElem,
@@ -67,7 +65,7 @@ window.addEventListener('resize', () => {
 const layer = new Konva.Layer();
 stage.add(layer);
 
-const circulo = new Konva.Circle({
+const circulo1 = new Konva.Circle({
     x: stage.width() / 2,
     y: stage.height() / 2,
     radius: 60,
@@ -77,23 +75,23 @@ const circulo = new Konva.Circle({
     draggable: true,
 });
 
-circulo.on('mouseenter', () => {
-    document.body.style.cursor = 'pointer';
+const circulo2 = new Konva.Circle({
+    x: stage.width() / 2,
+    y: stage.height() / 2,
+    radius: 30,
+    fill: '#3498bb',
+    stroke: '#298099',
+    strokeWidth: 4,
+    draggable: true,
 });
 
-circulo.on('mouseleave', () => {
-    document.body.style.cursor = 'default';
+circulo1.on('click', (event) => {
+    console.log('Circulo 1:', event.target, event.currentTarget)
 });
 
-circulo.on('dragstart', () => {
-    circulo.fill('#e74c3c');
-    layer.batchDraw();
+circulo2.on('click', (event) => {
+    console.log('Circulo 2', event.target, event.currentTarget)
 });
 
-circulo.on('dragend', () => {
-    circulo.fill('#3498db');
-    layer.batchDraw();
-});
-
-layer.add(circulo);
+layer.add(circulo1, circulo2);
 layer.draw();
