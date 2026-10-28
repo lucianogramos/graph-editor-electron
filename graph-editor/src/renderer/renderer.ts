@@ -1,5 +1,8 @@
 import Konva from "konva";
 import { titleBarInit } from "./title-bar";
+import { GraphManager } from "./grapheditor/graph-manager";
+import { LayerImpl } from "./graphics/LayerImpl";
+import { CircleShapeImpl } from "./graphics/CircleShapeImpl";
 
 titleBarInit();
 
@@ -24,8 +27,8 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-const layer = new Konva.Layer();
-stage.add(layer);
+const graphicsLayer = new LayerImpl();
+graphicsLayer.attachTo(stage);
 
 const circulo1 = new Konva.Circle({
     x: stage.width() / 2,
@@ -55,5 +58,18 @@ circulo2.on('click', (event) => {
     console.log('Circulo 2', event.target, event.currentTarget)
 });
 
-layer.add(circulo1, circulo2);
-layer.draw();
+const konvaLayer = (graphicsLayer as any).layer;
+konvaLayer.add(circulo1, circulo2);
+konvaLayer.draw();
+
+
+const graphManager = new GraphManager(graphicsLayer);
+
+stage.on('click', (e) => {
+    if (e.target !== stage) return;
+    const pointerPos = stage.getPointerPosition();
+    if (pointerPos) {
+        graphManager.addVertex(pointerPos.x, pointerPos.y);
+        konvaLayer.batchDraw(); 
+    }
+});
