@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
     --surface-color-1: oklch(98.47% 0.0083 236.56);
     --surface-color-2: oklch(94.47% 0.0083 236.56);
@@ -9,6 +11,17 @@
     --text-color-1: oklch(23.08% 0 0);
     --text-color-2: oklch(44.8% 0.0031 228.84);
     --text-color-3: oklch(72.93% 0.0063 239.86);
+}
+
+.dark {
+    --surface-color-1: oklch(23.08% 0 0);
+    --surface-color-2: oklch(26.07% 0.0018 286.27);
+    --surface-color-3: oklch(28.95% 0.0018 286.29);
+    --accent-color: oklch(80.92% 0.2142 147.53);
+    --border-color: oklch(81.73% 0.007 233.66);
+    --text-color-1: oklch(98.47% 0.0083 236.56);
+    --text-color-2: oklch(63.82% 0.0046 236.54);
+    --text-color-3: oklch(44.8% 0.0031 228.84);
 }
 
 body {
@@ -26,23 +39,31 @@ svg {
     display: flex;
     flex-direction: column;
     background-color: var(--surface-color-1);
+    color: var(--text-color-1)
 }
 
 #title-bar {
     height: 35px;
-    width: 100%;
+    width: calc(100% - 135px);
     flex-shrink: 0;
     padding: calc(var(--spacing) * 1.5);
     display: flex;
     align-items: center;
-    gap: var(--spacing);
     -webkit-app-region: drag;
+}
+
+#title-bar > * {
+    -webkit-app-region: no-drag;
 }
 
 #editor {
     background-image: url('../../img/CircleEditorBackground.svg');
     background-repeat: repeat;
     background-size: calc(var(--spacing) * 3);
+}
+
+.dark #editor {
+    background-image: none;
 }
 
 @theme inline {
