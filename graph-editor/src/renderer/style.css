@@ -189,6 +189,9 @@
   .right-1 {
     right: var(--spacing);
   }
+  .right-11 {
+    right: calc(var(--spacing) * 11);
+  }
   .right-12 {
     right: calc(var(--spacing) * 12);
   }
@@ -236,6 +239,9 @@
   }
   .w-7 {
     width: calc(var(--spacing) * 7);
+  }
+  .w-8 {
+    width: calc(var(--spacing) * 8);
   }
   .w-10 {
     width: calc(var(--spacing) * 10);
@@ -341,6 +347,9 @@
   }
   .group-data-\[theme\=light\]\:block:is(:where(.group)[data-theme="light"] *) {
     display: block;
+  }
+  .peer-data-\[selected\=true\]\/edge\:flex:is(:where(.peer\/edge)[data-selected="true"] ~ *) {
+    display: flex;
   }
   @media (hover: hover) {
     .hover\:bg-surface-2:hover {

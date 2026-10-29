@@ -49,81 +49,105 @@ stage.on('click', (e) => {
     }
 });
 
-const toolButtons = document.querySelectorAll('.tool-option');
 
-const btnSelect = toolButtons[0];       
-const btnAddVertex = toolButtons[1];    
-const btnAddEdge = document.getElementById('btn-edge-tool') || toolButtons[2]; // Garantido por ID
-const btnEraser = toolButtons[3];       
+const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;       
+const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
+const btnAddEdge = document.getElementById('btn-edge-tool') as HTMLButtonElement; // Garantido por ID
+const btnEraser = document.getElementById('btn-erase-tool') as HTMLButtonElement;
+btnSelect.setAttribute('data-selected', 'true');
+let currentTool: HTMLButtonElement = btnSelect;
 
-const edgeSubmenu = document.getElementById('edge-submenu') as HTMLDivElement;
-const weightSelect = document.getElementById('edge-weight-select') as HTMLSelectElement;
-const weightInputContainer = document.getElementById('edge-weight-input-container') as HTMLDivElement;
-const weightValueInput = document.getElementById('edge-weight-value') as HTMLInputElement;
-const directionSelect = document.getElementById('edge-direction-select') as HTMLSelectElement;
+btnSelect.addEventListener('click', () => setActiveToolButton(btnSelect));
+btnAddVertex.addEventListener('click', () => setActiveToolButton(btnAddVertex));
+btnAddEdge.addEventListener('click', () => setActiveToolButton(btnAddEdge));
+btnEraser.addEventListener('click', () => setActiveToolButton(btnEraser));
 
-function updateActiveButton(activeBtn: Element) {
-    toolButtons.forEach(btn => btn.removeAttribute('data-selected'));
-    activeBtn.setAttribute('data-selected', 'true');
+// const edgeSubmenu = document.getElementById('edge-submenu') as HTMLDivElement;
+// const weightSelect = document.getElementById('edge-weight-select') as HTMLSelectElement;
+// const weightInputContainer = document.getElementById('edge-weight-input-container') as HTMLDivElement;
+// const weightValueInput = document.getElementById('edge-weight-value') as HTMLInputElement;
+// const directionSelect = document.getElementById('edge-direction-select') as HTMLSelectElement;
+
+const edgeDirectedButton = document.getElementById('edge-directed-button') as HTMLButtonElement;
+const edgeUndirectedButton = document.getElementById('edge-undirected-button') as HTMLButtonElement;
+const edgeWeightedButton = document.getElementById('edge-weighted-button') as HTMLButtonElement;
+const edgeUnweightedButton = document.getElementById('edge-unweighted-button') as HTMLButtonElement;
+
+edgeDirectedButton.addEventListener('click', () => setActiveEdgeOption(edgeUndirectedButton, edgeDirectedButton));
+edgeUndirectedButton.addEventListener('click', () => setActiveEdgeOption(edgeDirectedButton, edgeUndirectedButton));
+edgeWeightedButton.addEventListener('click', () => setActiveEdgeOption(edgeUnweightedButton, edgeWeightedButton));
+edgeUnweightedButton.addEventListener('click', () => setActiveEdgeOption(edgeWeightedButton, edgeUnweightedButton));
+setActiveEdgeOption(edgeDirectedButton, edgeUndirectedButton);
+setActiveEdgeOption(edgeWeightedButton, edgeUnweightedButton);
+
+function setActiveToolButton(btn: HTMLButtonElement) {
+    currentTool.setAttribute('data-selected', 'false');
+    btn.setAttribute('data-selected', 'true');
+    currentTool = btn as HTMLButtonElement;
 }
 
-function evaluateEdgeCreationState() {
-    const weightVal = weightSelect.value;
-    const directionVal = directionSelect.value;
+function setActiveEdgeOption(currentActiveBtn: Element, newBtn: Element) {
+    currentActiveBtn.setAttribute('data-selected', 'false');
+    newBtn.setAttribute('data-selected', 'true');
+}
 
-    // Mostra ou esconde o input de valor do peso dependendo da escolha
-    if (weightVal === 'weighted') {
-        weightInputContainer?.classList.remove('hidden');
-    } else {
-        weightInputContainer?.classList.add('hidden');
-    }
+// function evaluateEdgeCreationState() {
+//     const weightVal = weightSelect.value;
+//     const directionVal = directionSelect.value;
 
-    if (weightVal !== "" && directionVal !== "") {
-        const isWeighted = weightVal === 'weighted';
-        const isDirected = directionVal === 'directed';
-        const customWeight = parseFloat(weightValueInput?.value) || 1;
+//     // Mostra ou esconde o input de valor do peso dependendo da escolha
+//     if (weightVal === 'weighted') {
+//         weightInputContainer?.classList.remove('hidden');
+//     } else {
+//         weightInputContainer?.classList.add('hidden');
+//     }
+
+//     if (weightVal !== "" && directionVal !== "") {
+//         const isWeighted = weightVal === 'weighted';
+//         const isDirected = directionVal === 'directed';
+//         const customWeight = parseFloat(weightValueInput?.value) || 1;
         
-        graphManager.enableEdgeCreation(isWeighted, isDirected, customWeight);
-        console.log(`Modo de arestas pronto -> Ponderado: ${isWeighted}, Direcional: ${isDirected}, Peso: ${customWeight}`);
-    } else {
-        graphManager.disableEdgeCreation();
-    }
-}
+//         graphManager.enableEdgeCreation(isWeighted, isDirected, customWeight);
+//         console.log(`Modo de arestas pronto -> Ponderado: ${isWeighted}, Direcional: ${isDirected}, Peso: ${customWeight}`);
+//     } else {
+//         graphManager.disableEdgeCreation();
+//     }
+// }
 
-btnSelect?.addEventListener('click', () => {
-    graphManager.disableEdgeCreation();
-    activeTool = 'select';
-    edgeSubmenu?.classList.add('hidden'); 
-    updateActiveButton(btnSelect);
-    console.log('Modo: Selecionar');
-});
+// btnSelect?.addEventListener('click', () => {
+//     graphManager.disableEdgeCreation();
+//     activeTool = 'select';
+//     edgeSubmenu?.classList.add('hidden'); 
+//     updateActiveButton(btnSelect);
+//     console.log('Modo: Selecionar');
+// });
 
 btnAddVertex?.addEventListener('click', () => {
     graphManager.disableEdgeCreation();
     activeTool = 'vertex';
-    edgeSubmenu?.classList.add('hidden'); 
-    updateActiveButton(btnAddVertex);
+    // edgeSubmenu?.classList.add('hidden'); 
+    // updateActiveButton(btnAddVertex);
     console.log('Modo: Criar Vértices');
 });
 
 btnAddEdge?.addEventListener('click', () => {
     activeTool = 'edge';
-    updateActiveButton(btnAddEdge);
+    // updateActiveButton(btnAddEdge);
     
-    edgeSubmenu?.classList.toggle('hidden');
+    // edgeSubmenu?.classList.toggle('hidden');
 
-    evaluateEdgeCreationState();
+    // evaluateEdgeCreationState();
     console.log('Modo de arestas: selecione as opções no sub-menu.');
 });
 
-weightSelect?.addEventListener('change', evaluateEdgeCreationState);
-weightValueInput?.addEventListener('input', evaluateEdgeCreationState);
-directionSelect?.addEventListener('change', evaluateEdgeCreationState);
+// weightSelect?.addEventListener('change', evaluateEdgeCreationState);
+// weightValueInput?.addEventListener('input', evaluateEdgeCreationState);
+// directionSelect?.addEventListener('change', evaluateEdgeCreationState);
 
 btnEraser?.addEventListener('click', () => {
     graphManager.disableEdgeCreation();
     activeTool = 'eraser';
-    edgeSubmenu?.classList.add('hidden'); 
-    updateActiveButton(btnEraser);
+    // edgeSubmenu?.classList.add('hidden'); 
+    // updateActiveButton(btnEraser);
     console.log('Modo: Apagar');
 });
