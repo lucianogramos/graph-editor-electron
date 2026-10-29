@@ -13,7 +13,9 @@ export class CircleShapeImpl implements CircleShape {
             fill: "blue",
             stroke: "black",
             strokeWidth: 2,
-            draggable: false
+            draggable: false,
+            hitStrokeWidth: 0,
+            perfectDrawEnabled: false
         })
     }
 

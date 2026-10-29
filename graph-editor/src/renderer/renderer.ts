@@ -2,6 +2,7 @@ import Konva from "konva";
 import { titleBarInit } from "./title-bar";
 import { GraphManager } from "./grapheditor/graph-manager";
 import { LayerImpl } from "./graphics/LayerImpl";
+import { ToolManager, ToolType } from "./grapheditor/ToolManager";
 
 titleBarInit();
 
@@ -27,46 +28,23 @@ window.addEventListener('resize', () => {
 });
 
 const graphicsLayer = new LayerImpl();
-
 stage.add(graphicsLayer.getKonvaLayer());
-
 graphicsLayer.draw();
 
 const graphManager = new GraphManager(graphicsLayer);
-
-let activeTool: 'select' | 'vertex' | 'edge' | 'eraser' = 'vertex';
-
-stage.on('click', (e) => {
-    if (e.target !== stage) return;
-    
-    if (activeTool !== 'vertex') return;
-
-    const pointerPos = stage.getRelativePointerPosition();
-    if (pointerPos) {
-        graphManager.addVertex(pointerPos.x, pointerPos.y);
-        graphicsLayer.batchDraw(); 
-        console.log(`Vértice criado em: x=${pointerPos.x}, y=${pointerPos.y}`);
-    }
-});
-
+const toolManager = new ToolManager();
 
 const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;       
 const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
-const btnAddEdge = document.getElementById('btn-edge-tool') as HTMLButtonElement; // Garantido por ID
+const btnAddEdge = document.getElementById('btn-edge-tool') as HTMLButtonElement;
 const btnEraser = document.getElementById('btn-erase-tool') as HTMLButtonElement;
-btnSelect.setAttribute('data-selected', 'true');
 let currentTool: HTMLButtonElement = btnSelect;
 
+btnSelect.setAttribute('data-selected', 'true');
 btnSelect.addEventListener('click', () => setActiveToolButton(btnSelect));
 btnAddVertex.addEventListener('click', () => setActiveToolButton(btnAddVertex));
 btnAddEdge.addEventListener('click', () => setActiveToolButton(btnAddEdge));
 btnEraser.addEventListener('click', () => setActiveToolButton(btnEraser));
-
-// const edgeSubmenu = document.getElementById('edge-submenu') as HTMLDivElement;
-// const weightSelect = document.getElementById('edge-weight-select') as HTMLSelectElement;
-// const weightInputContainer = document.getElementById('edge-weight-input-container') as HTMLDivElement;
-// const weightValueInput = document.getElementById('edge-weight-value') as HTMLInputElement;
-// const directionSelect = document.getElementById('edge-direction-select') as HTMLSelectElement;
 
 const edgeDirectedButton = document.getElementById('edge-directed-button') as HTMLButtonElement;
 const edgeUndirectedButton = document.getElementById('edge-undirected-button') as HTMLButtonElement;
@@ -80,10 +58,19 @@ edgeUnweightedButton.addEventListener('click', () => setActiveEdgeOption(edgeWei
 setActiveEdgeOption(edgeDirectedButton, edgeUndirectedButton);
 setActiveEdgeOption(edgeWeightedButton, edgeUnweightedButton);
 
+// function updateActiveButtonUI(tool: ToolType) {
+//     toolButtons.forEach(btn => btn.removeAttribute('data-selected'));
+    
+//     if (tool === 'select') btnSelect?.setAttribute('data-selected', 'true');
+//     else if (tool === 'vertex') btnAddVertex?.setAttribute('data-selected', 'true');
+//     else if (tool === 'edge') btnAddEdge?.setAttribute('data-selected', 'true');
+//     else if (tool === 'eraser') btnEraser?.setAttribute('data-selected', 'true');
+// }
+
 function setActiveToolButton(btn: HTMLButtonElement) {
-    currentTool.setAttribute('data-selected', 'false');
     btn.setAttribute('data-selected', 'true');
-    currentTool = btn as HTMLButtonElement;
+    currentTool.setAttribute('data-selected', 'false');
+    currentTool = btn;
 }
 
 function setActiveEdgeOption(currentActiveBtn: Element, newBtn: Element) {
@@ -91,63 +78,66 @@ function setActiveEdgeOption(currentActiveBtn: Element, newBtn: Element) {
     newBtn.setAttribute('data-selected', 'true');
 }
 
-// function evaluateEdgeCreationState() {
-//     const weightVal = weightSelect.value;
-//     const directionVal = directionSelect.value;
+toolManager.onToolChange((tool: ToolType) => {
+    graphManager.setTool(tool);
 
-//     // Mostra ou esconde o input de valor do peso dependendo da escolha
-//     if (weightVal === 'weighted') {
-//         weightInputContainer?.classList.remove('hidden');
-//     } else {
-//         weightInputContainer?.classList.add('hidden');
-//     }
+    stage.draggable(tool !== 'eraser');
 
-//     if (weightVal !== "" && directionVal !== "") {
-//         const isWeighted = weightVal === 'weighted';
-//         const isDirected = directionVal === 'directed';
-//         const customWeight = parseFloat(weightValueInput?.value) || 1;
-        
-//         graphManager.enableEdgeCreation(isWeighted, isDirected, customWeight);
-//         console.log(`Modo de arestas pronto -> Ponderado: ${isWeighted}, Direcional: ${isDirected}, Peso: ${customWeight}`);
-//     } else {
-//         graphManager.disableEdgeCreation();
-//     }
-// }
+    if (tool === 'edge') {
+        // evaluateEdgeCreationState();
+    } else {
+        graphManager.disableEdgeCreation();
+    }
+    
+    console.log(`Ferramenta ativa alterada para: ${tool}`);
+});
 
-// btnSelect?.addEventListener('click', () => {
-//     graphManager.disableEdgeCreation();
-//     activeTool = 'select';
-//     edgeSubmenu?.classList.add('hidden'); 
-//     updateActiveButton(btnSelect);
-//     console.log('Modo: Selecionar');
-// });
+toolManager.setTool('vertex');
+
+stage.on('click', (e) => {
+    if (e.target !== stage) return;
+    if (toolManager.getActiveTool() !== 'vertex') return;
+
+    const pointerPos = stage.getRelativePointerPosition();
+    if (pointerPos) {
+        graphManager.addVertex(pointerPos.x, pointerPos.y);
+        graphicsLayer.batchDraw(); 
+        console.log(`Vértice criado em: x=${pointerPos.x}, y=${pointerPos.y}`);
+    }
+});
+
+window.addEventListener('mousemove', (e: MouseEvent) => {
+    if (toolManager.getActiveTool() !== 'edge') return;
+
+    if (stage && typeof stage.setPointersPositions === 'function') {
+        stage.setPointersPositions(e);
+    }
+
+    const transform = stage.getAbsoluteTransform().copy();
+    transform.invert();
+    const pos = stage.getPointerPosition();
+    
+    if (pos) {
+        const stagePos = transform.point(pos);
+        graphManager.updateSemiEdgePointer(stagePos.x, stagePos.y);
+    }
+});
+
+btnSelect?.addEventListener('click', () => {
+    toolManager.setTool('select');
+});
 
 btnAddVertex?.addEventListener('click', () => {
-    graphManager.disableEdgeCreation();
-    activeTool = 'vertex';
-    // edgeSubmenu?.classList.add('hidden'); 
-    // updateActiveButton(btnAddVertex);
-    console.log('Modo: Criar Vértices');
+    toolManager.setTool('vertex');
 });
 
-btnAddEdge?.addEventListener('click', () => {
-    activeTool = 'edge';
-    // updateActiveButton(btnAddEdge);
-    
-    // edgeSubmenu?.classList.toggle('hidden');
-
-    // evaluateEdgeCreationState();
-    console.log('Modo de arestas: selecione as opções no sub-menu.');
+btnAddEdge?.addEventListener('click', () => {   
+    if (toolManager.getActiveTool() === 'edge') {
+    } else {
+        toolManager.setTool('edge');
+    }
 });
-
-// weightSelect?.addEventListener('change', evaluateEdgeCreationState);
-// weightValueInput?.addEventListener('input', evaluateEdgeCreationState);
-// directionSelect?.addEventListener('change', evaluateEdgeCreationState);
 
 btnEraser?.addEventListener('click', () => {
-    graphManager.disableEdgeCreation();
-    activeTool = 'eraser';
-    // edgeSubmenu?.classList.add('hidden'); 
-    // updateActiveButton(btnEraser);
-    console.log('Modo: Apagar');
+    toolManager.setTool('eraser');
 });
