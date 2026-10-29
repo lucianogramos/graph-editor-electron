@@ -75,6 +75,8 @@ svg {
     --color-primary: var(--text-color-1);
     --color-secondary: var(--text-color-2);
     --color-tertiary: var(--text-color-3);
+
+    --text-2xs: 0.625rem;
 }
 
 @layer components {
@@ -107,5 +109,9 @@ svg {
     .tool-option {
         @apply flex justify-center items-center text-tertiary p-1 border-t border-border-color first:border-none first:rounded-t-lg last:rounded-b-lg cursor-pointer hover:bg-surface-2 active:bg-surface-3
                hover:text-secondary data-[selected=true]:text-secondary;
+    }
+
+    .tool-option-shortcut {
+        @apply absolute text-secondary text-2xs bottom-1 right-1;
     }
 }
