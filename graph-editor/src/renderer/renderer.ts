@@ -1,8 +1,8 @@
-import Konva from "konva";
 import { titleBarInit } from "./title-bar";
 import { GraphManager } from "./grapheditor/graph-manager";
-import { LayerImpl } from "./graphics/LayerImpl";
+import { LayerImpl } from "./graphics/layer-impl";
 import { ToolManager, ToolType } from "./grapheditor/ToolManager";
+import * as Graphics from "./graphics/graphics-gateway";
 
 titleBarInit();
 
@@ -10,33 +10,25 @@ const editorElem = document.getElementById("editor") as HTMLDivElement;
 const weightValueInput = document.getElementById('edge-weight-input') as HTMLInputElement;
 const weightInputContainer = document.getElementById('edge-weight-container') as HTMLElement;
 
-const stage = new Konva.Stage({
-    container: editorElem,
-    width: editorElem.clientWidth,
-    height: editorElem.clientHeight,
-    draggable: true
-});
+const canvas = Graphics.createCanvas("editor", editorElem.clientWidth, editorElem.clientHeight);
 
 let timeoutId: number | undefined = undefined;
 
 window.addEventListener('resize', () => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
-        stage.setAttrs({
-            width: editorElem.clientWidth,
-            height: editorElem.clientHeight
-        });
+        canvas.setSize(editorElem.clientWidth, editorElem.clientHeight);
     }, 250);
 });
 
 const graphicsLayer = new LayerImpl();
-stage.add(graphicsLayer.getKonvaLayer());
+canvas.addLayer(graphicsLayer);
 graphicsLayer.draw();
 
-const graphManager = new GraphManager(graphicsLayer);
-const toolManager = new ToolManager(graphManager);
+const toolManager = new ToolManager();
+const graphManager = new GraphManager(toolManager, graphicsLayer);
 
-toolManager.init(stage, graphicsLayer);
+toolManager.init(canvas, graphManager);
 
 const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;        
 const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
@@ -69,18 +61,20 @@ if (btnAddVertex) {
 }
 
 if (btnAddEdge) {
-    btnAddEdge.addEventListener('click', () => {   
-        const isAlreadyEdge = toolManager.getActiveTool() === 'edge';
-        
-        if (isAlreadyEdge) {
-            const isSelected = btnAddEdge.getAttribute('data-selected') === 'true';
-            btnAddEdge.setAttribute('data-selected', isSelected ? 'false' : 'true');
-        } else {
-            toolManager.setTool('edge');
-            setActiveToolButton(btnAddEdge);
-            updateEdgeParameters();
-        }
-    });
+    if (btnAddEdge) {
+        btnAddEdge.addEventListener('click', () => {   
+            const isAlreadyEdge = toolManager.getActiveTool() === 'edge';
+            
+            if (isAlreadyEdge) {
+                const isSelected = btnAddEdge.getAttribute('data-selected') === 'true';
+                btnAddEdge.setAttribute('data-selected', isSelected ? 'false' : 'true');
+            } else {
+                toolManager.setTool('edge');
+                setActiveToolButton(btnAddEdge);
+                updateEdgeParameters();
+            }
+        });
+    }
 }
 
 if (btnEraser) {
@@ -174,7 +168,7 @@ function updateEdgeParameters() {
 
 toolManager.onToolChange((tool: ToolType) => {
     graphManager.setTool(tool);
-    stage.draggable(tool !== 'eraser');
+    canvas.setDraggable(tool !== 'eraser');
 
     if (tool === 'edge') {
         updateEdgeParameters();

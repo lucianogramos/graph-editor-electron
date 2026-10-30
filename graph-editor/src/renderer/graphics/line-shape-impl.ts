@@ -1,6 +1,6 @@
 import Konva from "konva";
 import type { LineShape } from "./line-shape.interface"; 
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./vector2";
 import { EventKeyMap } from "./event-key-map.interface"; 
 import type { Listener } from "./listener.interface";
 

@@ -2,7 +2,7 @@ import Konva from "konva";
 import type { CircleShape } from "./circle-shape.interface"; 
 import type { Listener } from "./listener.interface";
 import type { EventKeyMap } from "./event-key-map.interface"; 
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./vector2";
 
 export class CircleShapeImpl implements CircleShape {
     private circle: Konva.Circle;

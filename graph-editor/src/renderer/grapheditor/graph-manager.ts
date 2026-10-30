@@ -1,16 +1,17 @@
 import { Vertex } from './vertex';
 import { Edge } from './edge';
 import { SemiEdge } from './semiEdge'; 
-import Konva from "konva";
-import { CircleShapeImpl } from '../graphics/CircleShapeImpl';
-import { TextImpl } from '../graphics/TextImpl';
-import { Vector2 } from '../graphics/Vector2';
+import { ToolManager } from './ToolManager';
+import * as Graphics from '../graphics/graphics-gateway';
+import { CircleShape } from '../graphics/circle-shape.interface';
+import { Text } from '../graphics/text.interface';
+import { Layer } from '../graphics/layer.interface';
 
 export class GraphManager {
     private vertices: Vertex[] = [];
     private edges: Edge[] = [];
     
-    private vertexShapes: Map<Vertex, { circle: CircleShapeImpl, text: TextImpl }> = new Map();
+    private vertexShapes: Map<Vertex, { circle: CircleShape, text: Text }> = new Map();
     
     private firstSelectedVertex: Vertex | null = null;
     private semiEdge: SemiEdge | null = null; 
@@ -22,7 +23,13 @@ export class GraphManager {
     
     private activeTool: string = 'vertex'; 
 
-    constructor(private graphicsGateway: any) {}
+    constructor(private toolManager: ToolManager, private layer: Layer) {
+        this.toolManager.onToolChange((tool) => {
+            this.setTool(tool);
+        });
+        
+        this.activeTool = this.toolManager.getActiveTool();
+    }
 
     public addVertex(x: number, y: number): Vertex {
         let nextId = 1;
@@ -41,130 +48,24 @@ export class GraphManager {
         const initialLabel = newVertex.getId().toString();
         newVertex.setLabel(initialLabel);
         
-        const circleShape = new CircleShapeImpl(x, y, 25);
-        this.graphicsGateway.addShape(circleShape);
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-
-        const textShape = new TextImpl(x - 15, y - 7, initialLabel, 14);
+        const circleShape = Graphics.createCircle(x, y, 25);
+        const textShape = Graphics.createText(x - 15, y - 7, initialLabel, 14);
+        
         textShape.fill('#ffffff');
         textShape.setFontStyle('bold');
         textShape.setTextAlign('center');
         textShape.setWidth(30);
 
-        (textShape.getKonvaShape() as any).listening(false);
-
-        if (konvaLayer) {
-            konvaLayer.add(textShape.getKonvaShape());
-        }
+        this.layer.addShape(circleShape);
+        this.layer.addShape(textShape);
+        this.layer.batchDraw();
 
         this.vertexShapes.set(newVertex, { circle: circleShape, text: textShape });
 
-        const konvaNode = circleShape.getKonvaShape() as any;
-        konvaNode.draggable(this.activeTool === 'select');
+        circleShape.setDraggable(this.activeTool === 'select');
 
-        let hasMoved = false;
-
-        konvaNode.on('dragstart', (e: any) => {
-            if (!newVertex.getDraggable()) {
-                e.target.stopDrag();
-                return;
-            }
-            e.cancelBubble = true;
-            hasMoved = false;
-        });
-
-        konvaNode.on('dragmove', (e: any) => {
-            if (!newVertex.getDraggable()) return;
-            hasMoved = true;
-
-            const pos = konvaNode.position();
-            newVertex.setPosition(pos.x, pos.y);
-
-            textShape.setPosition(new Vector2(pos.x - 15, pos.y - 7));
-
-            if (konvaLayer) konvaLayer.batchDraw();
-        });
-
-        konvaNode.on('click', () => {
-            if (hasMoved) {
-                hasMoved = false;
-                return;
-            }
+        circleShape.on('click', () => {
             this.handleVertexClick(newVertex);
-        });
-
-        konvaNode.on('dblclick dbltap', (e: any) => {
-            if (!newVertex.getDraggable()) return;
-            e.cancelBubble = true;
-
-            const existingInput = document.getElementById('vertex-rename-input');
-            if (existingInput) existingInput.remove();
-
-            const stage = konvaNode.getStage();
-            const stageBox = stage.container().getBoundingClientRect();
-            const absPosition = konvaNode.getAbsolutePosition();
-
-            const screenX = stageBox.left + absPosition.x * stage.scaleX();
-            const screenY = stageBox.top + absPosition.y * stage.scaleY();
-
-            const input = document.createElement('input');
-            input.id = 'vertex-rename-input';
-            input.type = 'text';
-            input.value = textShape.text;
-            
-            input.style.position = 'absolute';
-            input.style.left = `${screenX}px`;
-            input.style.top = `${screenY}px`;
-            input.style.width = '60px';
-            input.style.zIndex = '1000';
-            input.style.textAlign = 'center';
-            input.style.fontSize = '12px';
-            input.style.fontWeight = 'bold';
-            input.style.borderRadius = '4px';
-            input.style.border = '1px solid #666';
-            input.style.backgroundColor = '#222';
-            input.style.color = '#fff';
-            input.style.padding = '2px';
-
-            document.body.appendChild(input);
-            input.focus();
-            input.select();
-
-            textShape.setText("");
-            if (konvaLayer) konvaLayer.batchDraw();
-
-            let isFinished = false;
-
-            const finishEditing = () => {
-                if (isFinished) return;
-                isFinished = true;
-
-                const newName = input.value.trim();
-                if (newName !== "") {
-                    newVertex.setLabel(newName);
-                    textShape.setText(newName);
-                } else {
-                    textShape.setText(initialLabel);
-                }
-                input.remove();
-                if (konvaLayer) konvaLayer.batchDraw();
-            };
-
-            input.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    finishEditing();
-                } else if (event.key === 'Escape') {
-                    input.value = textShape.text;
-                    finishEditing();
-                }
-            });
-
-            input.addEventListener('blur', () => {
-                finishEditing();
-            });
         });
 
         newVertex.addObserver((type, eventData) => this.processEvent(type, eventData));
@@ -172,7 +73,6 @@ export class GraphManager {
         this.vertices.push(newVertex);
         console.log(`Vertex created with ID ${newVertex.getId()} at (${x}, ${y}). Total vertices: ${this.vertices.length}`);
         
-        if (konvaLayer) konvaLayer.batchDraw();
         return newVertex;
     }
 
@@ -190,12 +90,9 @@ export class GraphManager {
         
         for (const vertex of this.vertices) {
             vertex.setDraggable(isSelectMode);
-            const shape = this.vertexShapes.get(vertex);
-            if (shape) {
-                const konvaNode = shape.circle.getKonvaShape() as any;
-                if (konvaNode) {
-                    konvaNode.draggable(isSelectMode);
-                }
+            const shapes = this.vertexShapes.get(vertex);
+            if (shapes && shapes.circle) {
+                shapes.circle.setDraggable(isSelectMode);
             }
         }
         
@@ -203,7 +100,7 @@ export class GraphManager {
             this.disableEdgeCreation();
         }
         
-        console.log(`GraphManager: Ferramenta ativa -> ${tool}`);
+        console.log(`GraphManager: Ferramenta ativa sincronizada via ToolManager -> ${tool}`);
     }
 
     private handleVertexClick(vertex: Vertex): void {
@@ -224,7 +121,7 @@ export class GraphManager {
         if (!this.firstSelectedVertex) {
             this.firstSelectedVertex = vertex;
             this.cleanupSemiEdge();
-            this.semiEdge = new SemiEdge(vertex.getX(), vertex.getY(), this.graphicsGateway, this.edgeDirected);
+            this.semiEdge = new SemiEdge(vertex.getX(), vertex.getY(), Graphics, this.edgeDirected);
             console.log(`First vertex selected (ID: ${vertex.getId()}).`);
         } else {
             console.log(`Second vertex selected (ID: ${vertex.getId()}). Creating edge...`);
@@ -257,7 +154,6 @@ export class GraphManager {
             source.getY(),
             target.getX(),
             target.getY(),
-            this.graphicsGateway,
             this.edgeWeighted,
             this.edgeDirected,
             weight,
@@ -273,6 +169,7 @@ export class GraphManager {
 
         this.edges.push(newEdge);
         this.reindexParallelEdges(source.getId(), target.getId());
+        this.layer.batchDraw();
 
         return newEdge;
     }
@@ -285,12 +182,7 @@ export class GraphManager {
         this.edges = this.edges.filter(e => e !== edge);
 
         this.reindexParallelEdges(sourceId, targetId);
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-            
-        if (konvaLayer) konvaLayer.batchDraw();
+        this.layer.batchDraw();
         console.log(`Edge between ${sourceId} and ${targetId} deleted.`);
     }
 
@@ -314,19 +206,15 @@ export class GraphManager {
 
         const shapes = this.vertexShapes.get(vertex);
         if (shapes) {
-            shapes.circle.getKonvaShape().destroy();
-            shapes.text.getKonvaShape().destroy();
+            this.layer.removeShape(shapes.circle);
+            this.layer.removeShape(shapes.text);
+            shapes.circle.destroy();
+            shapes.text.destroy();
             this.vertexShapes.delete(vertex);
         }
 
         this.vertices = this.vertices.filter(v => v !== vertex);
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-            
-        if (konvaLayer) konvaLayer.batchDraw();
-
+        this.layer.batchDraw();
         console.log(`Vertex (ID: ${vertexId}) and its connected edges were deleted.`);
     }
 
@@ -349,12 +237,6 @@ export class GraphManager {
                 edge.updatePosition(s.getX(), s.getY(), t.getX(), t.getY());
             }
         });
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-            
-        if (konvaLayer) konvaLayer.batchDraw();
     }
 
     private updateConnectedEdges(vertex: Vertex): void {
@@ -368,12 +250,7 @@ export class GraphManager {
                 }
             }
         }
-        
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-            
-        if (konvaLayer) konvaLayer.batchDraw();
+        this.layer.batchDraw();
     }
 
     public enableEdgeCreation(weighted: boolean, directed: boolean, weight: number = 1): void {
