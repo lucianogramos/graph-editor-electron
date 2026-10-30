@@ -1,4 +1,4 @@
-import type { Shape } from "./Shape";
+import type { Shape } from "./Shape.interface";
 
 export interface CircleShape extends Shape {
     readonly radius: number;

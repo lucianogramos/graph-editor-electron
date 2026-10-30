@@ -1,6 +1,6 @@
-import type { Canvas } from "./Canvas";
-import type { CircleShape } from "./CircleShape";
-import type { LineShape } from "./LineShape";
+import type { Canvas } from "./Canvas.interface";
+import type { CircleShape } from "./CircleShape.interface";
+import type { LineShape } from "./LineShape.interface";
 
 import { CanvasImpl } from "./CanvasImpl";
 import { CircleShapeImpl } from "./CircleShapeImpl";

@@ -1,6 +1,6 @@
 import Konva from "konva";
-import type { Canvas } from "./Canvas";
-import type { Layer } from "./Layer";
+import type { Canvas } from "./Canvas.interface";
+import type { Layer } from "./Layer.interface";
 import { LayerImpl } from "./LayerImpl";
 
 export class CanvasImpl<T> implements Canvas {

@@ -1,5 +1,5 @@
 import Konva from "konva";
-import type { LineShape } from "./LineShape";
+import type { LineShape } from "./LineShape.interface";
 import { Vector2 } from "./Vector2";
 
 export class LineShapeImpl implements LineShape {
@@ -15,6 +15,7 @@ export class LineShapeImpl implements LineShape {
             stroke: "black",
             strokeWidth: 2,
             tension: 0,
+            closed: false,
             draggable: false
         });
     }
@@ -40,6 +41,10 @@ export class LineShapeImpl implements LineShape {
 
     get tension(): number {
         return this.line.tension();
+    }
+
+    get loop(): boolean {
+        return this.line.closed();
     }
 
     setX(x: number): void {
@@ -76,6 +81,10 @@ export class LineShapeImpl implements LineShape {
 
     setTension(tension: number): void {
         this.line.tension(tension);
+    }
+
+    setLoop(loop: boolean): void {
+        this.line.closed(loop);
     }
 
     fill(hex: string): void {

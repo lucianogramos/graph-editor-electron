@@ -1,4 +1,4 @@
-import { Shape } from "./Shape";
+import { Shape } from "./Shape.interface";
 
 export interface Layer {
     addShape(shape: Shape): void;

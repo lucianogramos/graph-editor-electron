@@ -1,5 +1,5 @@
-import type { EventKeyMap } from "./EventKeyMap";
-import type { Listener } from "./Listener";
+import type { EventKeyMap } from "./EventKeyMap.interface";
+import type { Listener } from "./Listener.interface";
 
 export interface Dispatcher {
     dispatchEvent<K extends keyof EventKeyMap>(

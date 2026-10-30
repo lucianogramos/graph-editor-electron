@@ -1,6 +1,6 @@
 import Konva from "konva";
-import type { Layer } from "./Layer";
-import { Shape } from "./Shape";
+import type { Layer } from "./Layer.interface";
+import { Shape } from "./Shape.interface";
 import { CircleShapeImpl } from "./CircleShapeImpl";
 import { LineShapeImpl } from "./LineShapeImpl";
 

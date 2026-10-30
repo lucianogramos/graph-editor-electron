@@ -1,6 +1,6 @@
 
-import type { Listener } from "./Listener";
-import type { EventKeyMap } from "./EventKeyMap";
+import type { Listener } from "./Listener.interface";
+import type { EventKeyMap } from "./EventKeyMap.interface";
 
 export class ListenerImpl implements Listener {
     private callbacks: {

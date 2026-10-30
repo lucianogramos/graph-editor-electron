@@ -1,5 +1,5 @@
 import Konva from "konva";
-import type { CircleShape } from "./CircleShape";
+import type { CircleShape } from "./CircleShape.interface";
 import { Vector2 } from "./Vector2";
 
 export class CircleShapeImpl implements CircleShape {
@@ -13,9 +13,7 @@ export class CircleShapeImpl implements CircleShape {
             fill: "blue",
             stroke: "black",
             strokeWidth: 2,
-            draggable: false,
-            hitStrokeWidth: 0,
-            perfectDrawEnabled: false
+            draggable: false
         })
     }
 
