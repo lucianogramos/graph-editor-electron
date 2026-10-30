@@ -10,6 +10,7 @@ export class ToolManager {
 
     public setTool(tool: ToolType): void {
         this.activeTool = tool;
+        this.graphManager.setTool(tool);
         this.notifyListeners();
     }
 

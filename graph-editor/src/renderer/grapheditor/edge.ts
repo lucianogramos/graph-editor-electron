@@ -5,6 +5,7 @@ export class Edge {
     private arrowHead: Konva.Line;
     private text: Konva.Text;
     private group: Konva.Group;
+    private clickCallback?: () => void;
 
     constructor(
         private sourceId: number,
@@ -78,6 +79,13 @@ export class Edge {
         this.group.add(this.arrowHead);
         this.group.add(this.text);
 
+        this.group.on('click tap', (e: any) => {
+            e.cancelBubble = true;
+            if (this.clickCallback) {
+                this.clickCallback();
+            }
+        });
+
         const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
             ? this.graphicsGateway.getKonvaLayer() 
             : (this.graphicsGateway as any).layer;
@@ -86,6 +94,10 @@ export class Edge {
             konvaLayer.add(this.group);
             konvaLayer.batchDraw();
         }
+    }
+
+    public onClick(callback: () => void): void {
+        this.clickCallback = callback;
     }
 
     public setParallelIndex(index: number, forceInvert: boolean): void {

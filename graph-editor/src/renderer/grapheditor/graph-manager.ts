@@ -20,13 +20,24 @@ export class GraphManager {
     private edgeDirected: boolean = false;
     private edgeWeightValue: number = 1;
     
-    private nextVertexId: number = 1;
     private activeTool: string = 'vertex'; 
 
     constructor(private graphicsGateway: any) {}
 
     public addVertex(x: number, y: number): Vertex {
-        const newVertex = new Vertex(x, y, this.nextVertexId++);
+        let nextId = 1;
+        if (this.vertices.length > 0) {
+            const existingIds = this.vertices.map(v => v.getId()).sort((a, b) => a - b);
+            nextId = existingIds.length + 1;
+            for (let i = 0; i < existingIds.length; i++) {
+                if (existingIds[i] !== i + 1) {
+                    nextId = i + 1;
+                    break;
+                }
+            }
+        }
+
+        const newVertex = new Vertex(x, y, nextId);
         const initialLabel = newVertex.getId().toString();
         newVertex.setLabel(initialLabel);
         
@@ -105,8 +116,8 @@ export class GraphManager {
             input.value = textShape.text;
             
             input.style.position = 'absolute';
-            input.style.left = `${screenX - 30}px`;
-            input.style.top = `${screenY - 15}px`;
+            input.style.left = `${screenX}px`;
+            input.style.top = `${screenY}px`;
             input.style.width = '60px';
             input.style.zIndex = '1000';
             input.style.textAlign = 'center';
@@ -192,10 +203,15 @@ export class GraphManager {
             this.disableEdgeCreation();
         }
         
-        console.log(`GraphManager: Modo de seleção ativado? ${isSelectMode}`);
+        console.log(`GraphManager: Ferramenta ativa -> ${tool}`);
     }
 
     private handleVertexClick(vertex: Vertex): void {
+        if (this.activeTool === 'eraser') {
+            this.removeVertex(vertex);
+            return;
+        }
+
         if (!this.isEdgeCreationActive) return;
 
         if (this.firstSelectedVertex === vertex) {
@@ -249,11 +265,69 @@ export class GraphManager {
             false
         );
 
+        newEdge.onClick(() => {
+            if (this.activeTool === 'eraser') {
+                this.removeEdge(newEdge);
+            }
+        });
+
         this.edges.push(newEdge);
-        
         this.reindexParallelEdges(source.getId(), target.getId());
 
         return newEdge;
+    }
+
+    public removeEdge(edge: Edge): void {
+        const sourceId = edge.getSourceId();
+        const targetId = edge.getTargetId();
+
+        edge.destroy();
+        this.edges = this.edges.filter(e => e !== edge);
+
+        this.reindexParallelEdges(sourceId, targetId);
+
+        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
+            ? this.graphicsGateway.getKonvaLayer() 
+            : (this.graphicsGateway as any).layer;
+            
+        if (konvaLayer) konvaLayer.batchDraw();
+        console.log(`Edge between ${sourceId} and ${targetId} deleted.`);
+    }
+
+    public removeVertex(vertex: Vertex): void {
+        const vertexId = vertex.getId();
+
+        const connectedEdges = this.edges.filter(edge => edge.isConnectedTo(vertexId));
+        
+        const affectedPairs = new Set<string>();
+        connectedEdges.forEach(edge => {
+            affectedPairs.add(`${Math.min(edge.getSourceId(), edge.getTargetId())}-${Math.max(edge.getSourceId(), edge.getTargetId())}`);
+            edge.destroy();
+        });
+
+        this.edges = this.edges.filter(edge => !edge.isConnectedTo(vertexId));
+
+        affectedPairs.forEach(pairKey => {
+            const [v1, v2] = pairKey.split('-').map(Number);
+            this.reindexParallelEdges(v1, v2);
+        });
+
+        const shapes = this.vertexShapes.get(vertex);
+        if (shapes) {
+            shapes.circle.getKonvaShape().destroy();
+            shapes.text.getKonvaShape().destroy();
+            this.vertexShapes.delete(vertex);
+        }
+
+        this.vertices = this.vertices.filter(v => v !== vertex);
+
+        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
+            ? this.graphicsGateway.getKonvaLayer() 
+            : (this.graphicsGateway as any).layer;
+            
+        if (konvaLayer) konvaLayer.batchDraw();
+
+        console.log(`Vertex (ID: ${vertexId}) and its connected edges were deleted.`);
     }
 
     public reindexParallelEdges(v1Id: number, v2Id: number): void {
