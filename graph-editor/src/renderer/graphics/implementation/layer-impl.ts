@@ -3,7 +3,7 @@ import type { Layer } from "../interface/layer.interface";
 import { Shape } from "../interface/shape.interface";
 import { LineShapeImpl } from "./line-shape-impl"; 
 import { CircleShapeImpl } from "./circle-shape-impl";
-import { EventKeyMap } from "./event-key-map.interface";
+import { EventKeyMap } from "../interface/event-key-map.interface"; 
 import { Listener } from "../interface/listener.interface";
 
 export class LayerImpl implements Layer {
