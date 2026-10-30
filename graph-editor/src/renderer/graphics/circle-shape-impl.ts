@@ -1,7 +1,7 @@
 import Konva from "konva";
-import type { CircleShape } from "./CircleShape.interface";
-import type { Listener } from "./Listener.interface";
-import type { EventKeyMap } from "./EventKeyMap.interface";
+import type { CircleShape } from "./circle-shape.interface"; 
+import type { Listener } from "./listener.interface";
+import type { EventKeyMap } from "./event-key-map.interface"; 
 import { Vector2 } from "./Vector2";
 
 export class CircleShapeImpl implements CircleShape {
@@ -9,15 +9,15 @@ export class CircleShapeImpl implements CircleShape {
     private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, radius: number) {
+    constructor(x: number, y: number, radius: number, fill: string = "blue", stroke: string = "black", strokeWidth: number = 2, draggable: boolean = false) {
         this.circle = new Konva.Circle({
             x: x,
             y: y,
             radius: radius,
-            fill: "blue",
-            stroke: "black",
-            strokeWidth: 2,
-            draggable: false
+            fill: fill,
+            stroke: stroke,
+            strokeWidth: strokeWidth,
+            draggable: draggable
         })
     }
 

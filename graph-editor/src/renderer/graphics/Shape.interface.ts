@@ -1,5 +1,5 @@
-import { Dispatcher } from "./Dispatcher.interface";
-import { Listener } from "./Listener.interface";
+import { Dispatcher } from "./dispatcher.interface";
+import { Listener } from "./listener.interface";
 import { Vector2 } from "./Vector2";
 
 export interface Shape extends Listener, Dispatcher{

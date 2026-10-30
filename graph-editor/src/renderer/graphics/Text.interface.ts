@@ -1,4 +1,4 @@
-import { Shape } from "./Shape.interface";
+import { Shape } from "./shape.interface";
 
 export type Direction = "ltr" | "rtl";
 

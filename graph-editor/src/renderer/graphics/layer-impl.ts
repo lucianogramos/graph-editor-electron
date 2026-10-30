@@ -1,11 +1,15 @@
 import Konva from "konva";
-import type { Layer } from "./Layer.interface";
-import { Shape } from "./Shape.interface";
-import { CircleShapeImpl } from "./CircleShapeImpl";
-import { LineShapeImpl } from "./LineShapeImpl";
+import type { Layer } from "./layer.interface"; 
+import { Shape } from "./shape.interface";
+import { LineShapeImpl } from "./line-shape-impl"; 
+import { CircleShapeImpl } from "./circle-shape-impl";
+import { EventKeyMap } from "./event-key-map.interface";
+import { Listener } from "./listener.interface";
 
 export class LayerImpl implements Layer {
     private layer: Konva.Layer;
+    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private listeners: Listener[] = [];
 
     constructor() {
         this.layer = new Konva.Layer();
@@ -46,5 +50,49 @@ export class LayerImpl implements Layer {
 
     batchDraw(): void {
         this.layer.batchDraw();
+    }
+    
+    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        callbacks.push(callback);
+        this.callbacks[type] = callbacks;
+    }
+
+    off<K extends keyof EventKeyMap>(type: K): void {
+        delete this.callbacks[type];
+    }
+
+    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        const callbacks = this.callbacks[type];
+
+        if (!callbacks) {
+            return;
+        }
+
+        for (const callback of [...callbacks]) {
+            if (event.cancel) {
+                break;
+            }
+
+            callback(event);
+        }
+    }
+
+    addListener(listener: Listener): void {
+        if (!this.listeners.includes(listener)) {
+            this.listeners.push(listener);
+        }
+    }
+
+    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        this.processEvent(type, event);
+
+        for (const listener of [...this.listeners]) {
+            if (event.cancel) {
+                break;
+            }
+
+            listener.processEvent(type, event);
+        }
     }
 }

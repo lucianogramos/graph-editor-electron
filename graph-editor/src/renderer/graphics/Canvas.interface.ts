@@ -1,5 +1,5 @@
-import type { Layer } from "./Layer.interface";
-import { Listener } from "./Listener.interface";
+import type { Layer } from "./layer.interface";
+import { Listener } from "./listener.interface";
 
 export interface Canvas extends Listener{
     readonly width: number;

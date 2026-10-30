@@ -1,26 +1,26 @@
 import Konva from "konva";
-import type { LineShape } from "./LineShape.interface";
+import type { LineShape } from "./line-shape.interface"; 
 import { Vector2 } from "./Vector2";
-import { EventKeyMap } from "./EventKeyMap.interface";
-import type { Listener } from "./Listener.interface";
+import { EventKeyMap } from "./event-key-map.interface"; 
+import type { Listener } from "./listener.interface";
 
 export class LineShapeImpl implements LineShape {
     private line: Konva.Line;
     private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
     private listeners: Listener[] = [];
 
-    constructor(points: Vector2[]) {
+    constructor(points: Vector2[], stroke: string = "black", strokeWidth: number = 2, tension: number = 0, draggable: boolean = false, closed: boolean = false) {
         const coordinates = points.flatMap(
             point => [point.x, point.y]
         );
 
         this.line = new Konva.Line({
             points: coordinates,
-            stroke: "black",
-            strokeWidth: 2,
-            tension: 0,
-            closed: false,
-            draggable: false
+            stroke: stroke,
+            strokeWidth: strokeWidth,
+            tension: tension,
+            closed: closed,
+            draggable: draggable
         });
     }
 

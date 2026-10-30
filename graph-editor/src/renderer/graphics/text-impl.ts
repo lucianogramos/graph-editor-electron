@@ -1,25 +1,25 @@
 
 import Konva from "konva";
 import { Vector2 } from "./Vector2";
-import { Direction, Text } from "./Text.interface";
-import { EventKeyMap } from "./EventKeyMap.interface";
-import { Listener } from "./Listener.interface";
+import { Direction, Text } from "./text.interface";
+import { Listener } from "./listener.interface";
+import { EventKeyMap } from "./event-key-map.interface";
 
 export class TextImpl implements Text {
     private konvaText: Konva.Text;
     private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, text: string,fontSize: number = 16) {
+    constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr") {
         this.konvaText = new Konva.Text({
-            x,
-            y,
-            text,
-            fontSize,
-            fontFamily: "Arial",
-            fill: "black",
-            draggable: false,
-            direction: "ltr"
+            x: y,
+            y: y,
+            text: text,
+            fontSize: fontSize,
+            fontFamily: fontFamily,
+            fill: fill,
+            draggable: draggable,
+            direction: direction
         });
     }
 

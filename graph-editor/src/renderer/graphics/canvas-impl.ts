@@ -1,9 +1,9 @@
 import Konva from "konva";
-import type { Canvas } from "./Canvas.interface";
-import type { Layer } from "./Layer.interface";
-import { LayerImpl } from "./LayerImpl";
-import { EventKeyMap } from "./EventKeyMap.interface";
-import { Listener } from "./Listener.interface";
+import type { Layer } from "./layer.interface";
+import { LayerImpl } from "./layer-impl"; 
+import { Listener } from "./listener.interface";
+import { EventKeyMap } from "./event-key-map.interface";
+import { Canvas } from "./canvas.interface";
 
 export class CanvasImpl<T> implements Canvas {
     private stage: Konva.Stage;

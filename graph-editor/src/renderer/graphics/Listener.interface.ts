@@ -1,4 +1,4 @@
-import type { EventKeyMap } from "./EventKeyMap.interface";
+import { EventKeyMap } from "./event-key-map.interface";
 
 export interface Listener {
     on<K extends keyof EventKeyMap>(

@@ -1,6 +1,6 @@
-import { Dispatcher } from "./Dispatcher.interface";
-import { Listener } from "./Listener.interface";
-import { Shape } from "./Shape.interface";
+import { Dispatcher } from "./dispatcher.interface";
+import { Listener } from "./listener.interface";
+import { Shape } from "./shape.interface";
 
 export interface Layer extends Listener, Dispatcher{
     addShape(shape: Shape): void;

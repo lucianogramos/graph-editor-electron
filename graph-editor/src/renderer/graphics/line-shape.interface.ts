@@ -1,4 +1,4 @@
-import type { Shape } from "./Shape.interface";
+import type { Shape } from "./shape.interface";
 import { Vector2 } from "./Vector2";
 
 export interface LineShape extends Shape {
