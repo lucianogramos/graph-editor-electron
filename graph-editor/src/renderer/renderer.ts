@@ -7,6 +7,8 @@ import { ToolManager, ToolType } from "./grapheditor/ToolManager";
 titleBarInit();
 
 const editorElem = document.getElementById("editor") as HTMLDivElement;
+const weightValueInput = document.getElementById('edge-weight-input') as HTMLInputElement;
+const weightInputContainer = document.getElementById('edge-weight-container') as HTMLElement;
 
 const stage = new Konva.Stage({
     container: editorElem,
@@ -32,112 +34,158 @@ stage.add(graphicsLayer.getKonvaLayer());
 graphicsLayer.draw();
 
 const graphManager = new GraphManager(graphicsLayer);
-const toolManager = new ToolManager();
+const toolManager = new ToolManager(graphManager);
 
-const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;       
+toolManager.init(stage, graphicsLayer);
+
+const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;        
 const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
 const btnAddEdge = document.getElementById('btn-edge-tool') as HTMLButtonElement;
 const btnEraser = document.getElementById('btn-erase-tool') as HTMLButtonElement;
-let currentTool: HTMLButtonElement = btnSelect;
 
-btnSelect.setAttribute('data-selected', 'true');
-btnSelect.addEventListener('click', () => setActiveToolButton(btnSelect));
-btnAddVertex.addEventListener('click', () => setActiveToolButton(btnAddVertex));
-btnAddEdge.addEventListener('click', () => setActiveToolButton(btnAddEdge));
-btnEraser.addEventListener('click', () => setActiveToolButton(btnEraser));
+let currentToolButton: HTMLButtonElement | null = btnAddVertex;
 
-const edgeDirectedButton = document.getElementById('edge-directed-button') as HTMLButtonElement;
-const edgeUndirectedButton = document.getElementById('edge-undirected-button') as HTMLButtonElement;
-const edgeWeightedButton = document.getElementById('edge-weighted-button') as HTMLButtonElement;
-const edgeUnweightedButton = document.getElementById('edge-unweighted-button') as HTMLButtonElement;
-
-edgeDirectedButton.addEventListener('click', () => setActiveEdgeOption(edgeUndirectedButton, edgeDirectedButton));
-edgeUndirectedButton.addEventListener('click', () => setActiveEdgeOption(edgeDirectedButton, edgeUndirectedButton));
-edgeWeightedButton.addEventListener('click', () => setActiveEdgeOption(edgeUnweightedButton, edgeWeightedButton));
-edgeUnweightedButton.addEventListener('click', () => setActiveEdgeOption(edgeWeightedButton, edgeUnweightedButton));
-setActiveEdgeOption(edgeDirectedButton, edgeUndirectedButton);
-setActiveEdgeOption(edgeWeightedButton, edgeUnweightedButton);
-
-// function updateActiveButtonUI(tool: ToolType) {
-//     toolButtons.forEach(btn => btn.removeAttribute('data-selected'));
-    
-//     if (tool === 'select') btnSelect?.setAttribute('data-selected', 'true');
-//     else if (tool === 'vertex') btnAddVertex?.setAttribute('data-selected', 'true');
-//     else if (tool === 'edge') btnAddEdge?.setAttribute('data-selected', 'true');
-//     else if (tool === 'eraser') btnEraser?.setAttribute('data-selected', 'true');
-// }
-
-function setActiveToolButton(btn: HTMLButtonElement) {
+function setActiveToolButton(btn: HTMLButtonElement | null) {
+    if (!btn) return;
+    if (currentToolButton) {
+        currentToolButton.setAttribute('data-selected', 'false');
+    }
     btn.setAttribute('data-selected', 'true');
-    currentTool.setAttribute('data-selected', 'false');
-    currentTool = btn;
+    currentToolButton = btn;
 }
 
-function setActiveEdgeOption(currentActiveBtn: Element, newBtn: Element) {
-    currentActiveBtn.setAttribute('data-selected', 'false');
-    newBtn.setAttribute('data-selected', 'true');
+if (btnSelect) {
+    btnSelect.addEventListener('click', () => {
+        toolManager.setTool('select');
+        setActiveToolButton(btnSelect);
+    });
+}
+
+if (btnAddVertex) {
+    btnAddVertex.addEventListener('click', () => {
+        toolManager.setTool('vertex');
+        setActiveToolButton(btnAddVertex);
+    });
+}
+
+if (btnAddEdge) {
+    btnAddEdge.addEventListener('click', () => {   
+        const isAlreadyEdge = toolManager.getActiveTool() === 'edge';
+        
+        if (isAlreadyEdge) {
+            const isSelected = btnAddEdge.getAttribute('data-selected') === 'true';
+            btnAddEdge.setAttribute('data-selected', isSelected ? 'false' : 'true');
+        } else {
+            toolManager.setTool('edge');
+            setActiveToolButton(btnAddEdge);
+            updateEdgeParameters();
+        }
+    });
+}
+
+if (btnEraser) {
+    btnEraser.addEventListener('click', () => {
+        toolManager.setTool('eraser');
+        setActiveToolButton(btnEraser);
+    });
+}
+
+let edgeTypeSelected = false;
+let edgeWeightSelected = false;
+
+const edgeDirectedButton = document.querySelector('button[data-value="directed"]') as HTMLButtonElement;
+const edgeUndirectedButton = document.querySelector('button[data-value="undirected"]') as HTMLButtonElement;
+const edgeWeightedButton = document.querySelector('button[data-value="weighted"]') as HTMLButtonElement;
+const edgeUnweightedButton = document.querySelector('button[data-value="unweighted"]') as HTMLButtonElement;
+
+if (edgeDirectedButton && edgeUndirectedButton) {
+    edgeDirectedButton.addEventListener('click', () => {
+        edgeDirectedButton.setAttribute('data-selected', 'true');
+        edgeUndirectedButton.setAttribute('data-selected', 'false');
+        edgeTypeSelected = true;
+        updateEdgeParameters();
+    });
+    
+    edgeUndirectedButton.addEventListener('click', () => {
+        edgeUndirectedButton.setAttribute('data-selected', 'true');
+        edgeDirectedButton.setAttribute('data-selected', 'false');
+        edgeTypeSelected = true;
+        updateEdgeParameters();
+    });
+}
+
+if (edgeWeightedButton && edgeUnweightedButton) {
+    edgeWeightedButton.addEventListener('click', () => {
+        edgeWeightedButton.setAttribute('data-selected', 'true');
+        edgeUnweightedButton.setAttribute('data-selected', 'false');
+        edgeWeightSelected = true;
+
+        if (weightInputContainer) {
+            weightInputContainer.classList.remove('hidden');
+            weightInputContainer.classList.add('flex');
+        }
+
+        updateEdgeParameters();
+    });
+
+    edgeUnweightedButton.addEventListener('click', () => {
+        edgeUnweightedButton.setAttribute('data-selected', 'true');
+        edgeWeightedButton.setAttribute('data-selected', 'false');
+        edgeWeightSelected = true;
+
+        if (weightInputContainer) {
+            weightInputContainer.classList.remove('flex');
+            weightInputContainer.classList.add('hidden');
+        }
+
+        updateEdgeParameters();
+    });
+}
+
+if (weightValueInput) {
+    weightValueInput.addEventListener('input', () => {
+        updateEdgeParameters();
+    });
+}
+
+function updateEdgeParameters() {
+    if (toolManager.getActiveTool() === 'edge') {
+        if (!edgeTypeSelected || !edgeWeightSelected) {
+            graphManager.disableEdgeCreation();
+            return;
+        }
+
+        const isWeighted = edgeWeightedButton?.getAttribute('data-selected') === 'true';
+        const isDirected = edgeDirectedButton?.getAttribute('data-selected') === 'true';
+        
+        let weight = 1;
+        if (isWeighted) {
+            if (weightValueInput) {
+                weight = parseFloat(weightValueInput.value) || 1;
+            } else {
+                const inputWeight = prompt("Digite o peso da aresta:", "1");
+                weight = inputWeight ? parseFloat(inputWeight) || 1 : 1;
+            }
+        }
+
+        graphManager.enableEdgeCreation(isWeighted, isDirected, weight);
+    }
 }
 
 toolManager.onToolChange((tool: ToolType) => {
     graphManager.setTool(tool);
-
     stage.draggable(tool !== 'eraser');
 
     if (tool === 'edge') {
-        // evaluateEdgeCreationState();
+        updateEdgeParameters();
     } else {
         graphManager.disableEdgeCreation();
+        if (weightInputContainer) {
+            weightInputContainer.classList.remove('flex');
+            weightInputContainer.classList.add('hidden');
+        }
     }
-    
-    console.log(`Ferramenta ativa alterada para: ${tool}`);
 });
 
 toolManager.setTool('vertex');
-
-stage.on('click', (e) => {
-    if (e.target !== stage) return;
-    if (toolManager.getActiveTool() !== 'vertex') return;
-
-    const pointerPos = stage.getRelativePointerPosition();
-    if (pointerPos) {
-        graphManager.addVertex(pointerPos.x, pointerPos.y);
-        graphicsLayer.batchDraw(); 
-        console.log(`Vértice criado em: x=${pointerPos.x}, y=${pointerPos.y}`);
-    }
-});
-
-window.addEventListener('mousemove', (e: MouseEvent) => {
-    if (toolManager.getActiveTool() !== 'edge') return;
-
-    if (stage && typeof stage.setPointersPositions === 'function') {
-        stage.setPointersPositions(e);
-    }
-
-    const transform = stage.getAbsoluteTransform().copy();
-    transform.invert();
-    const pos = stage.getPointerPosition();
-    
-    if (pos) {
-        const stagePos = transform.point(pos);
-        graphManager.updateSemiEdgePointer(stagePos.x, stagePos.y);
-    }
-});
-
-btnSelect?.addEventListener('click', () => {
-    toolManager.setTool('select');
-});
-
-btnAddVertex?.addEventListener('click', () => {
-    toolManager.setTool('vertex');
-});
-
-btnAddEdge?.addEventListener('click', () => {   
-    if (toolManager.getActiveTool() === 'edge') {
-    } else {
-        toolManager.setTool('edge');
-    }
-});
-
-btnEraser?.addEventListener('click', () => {
-    toolManager.setTool('eraser');
-});
+setActiveToolButton(btnAddVertex);

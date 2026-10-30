@@ -1,22 +1,19 @@
 import Konva from 'konva';
-import { Vertex } from './vertex';
 
 export class SemiEdge {
     private line: Konva.Line;
     private group: Konva.Group;
 
     constructor(
-        private sourceVertex: Vertex,
+        private startX: number,
+        private startY: number,
         private graphicsGateway: any,
         private directed: boolean = false
     ) {
         this.group = new Konva.Group();
 
-        const startX = this.sourceVertex.getX();
-        const startY = this.sourceVertex.getY();
-
         this.line = new Konva.Line({
-            points: [startX, startY, startX, startY],
+            points: [this.startX, this.startY, this.startX, this.startY],
             stroke: '#2c3e50',
             strokeWidth: 2,
             dash: [4, 4], 
@@ -39,14 +36,9 @@ export class SemiEdge {
         }
     }
 
-    
     public updateEndPoint(x: number, y: number): void {
-        const startX = this.sourceVertex.getX();
-        const startY = this.sourceVertex.getY();
-
-        
-        const dx = x - startX;
-        const dy = y - startY;
+        const dx = x - this.startX;
+        const dy = y - this.startY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance === 0) return;
@@ -55,8 +47,8 @@ export class SemiEdge {
         const ux = dx / distance;
         const uy = dy / distance;
 
-        const startXOffset = startX + ux * radius;
-        const startYOffset = startY + uy * radius;
+        const startXOffset = this.startX + ux * radius;
+        const startYOffset = this.startY + uy * radius;
 
         this.line.points([startXOffset, startYOffset, x, y]);
 
