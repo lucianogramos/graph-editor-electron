@@ -2,9 +2,13 @@ import Konva from "konva";
 import type { Canvas } from "./Canvas.interface";
 import type { Layer } from "./Layer.interface";
 import { LayerImpl } from "./LayerImpl";
+import { EventKeyMap } from "./EventKeyMap.interface";
+import { Listener } from "./Listener.interface";
 
 export class CanvasImpl<T> implements Canvas {
     private stage: Konva.Stage;
+    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private listeners: Listener[] = [];
 
     constructor(container: string, width: number, height: number) {
         this.stage = new Konva.Stage({
@@ -62,6 +66,33 @@ export class CanvasImpl<T> implements Canvas {
 
         if (konvaLayer.getParent() === this.stage) {
             konvaLayer.destroy();
+        }
+    }
+
+    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        callbacks.push(callback);
+        this.callbacks[type] = callbacks;
+    }
+        
+    off<K extends keyof EventKeyMap>(type: K): void {
+        delete this.callbacks[type];
+    }
+        
+            
+    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        const callbacks = this.callbacks[type];
+        
+        if (!callbacks) {
+            return;
+        }
+        
+        for (const callback of [...callbacks]) {
+            if (event.cancel) {
+                break;
+            }
+        
+            callback(event);
         }
     }
 }

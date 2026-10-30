@@ -1,9 +1,13 @@
 import Konva from "konva";
 import type { LineShape } from "./LineShape.interface";
 import { Vector2 } from "./Vector2";
+import { EventKeyMap } from "./EventKeyMap.interface";
+import type { Listener } from "./Listener.interface";
 
 export class LineShapeImpl implements LineShape {
     private line: Konva.Line;
+    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private listeners: Listener[] = [];
 
     constructor(points: Vector2[]) {
         const coordinates = points.flatMap(
@@ -98,6 +102,51 @@ export class LineShapeImpl implements LineShape {
 
     getKonvaShape(): Konva.Line {
         return this.line;
+    }
+
+    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        callbacks.push(callback);
+        this.callbacks[type] = callbacks;
+    }
+    
+    off<K extends keyof EventKeyMap>(type: K): void {
+        delete this.callbacks[type];
+    }
+    
+        
+    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        const callbacks = this.callbacks[type];
+    
+        if (!callbacks) {
+            return;
+        }
+    
+        for (const callback of [...callbacks]) {
+            if (event.cancel) {
+                break;
+            }
+    
+            callback(event);
+        }
+    }
+
+    addListener(listener: Listener): void {
+        if (!this.listeners.includes(listener)) {
+            this.listeners.push(listener);
+        }
+    }
+
+    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        this.processEvent(type, event);
+
+        for (const listener of [...this.listeners]) {
+            if (event.cancel) {
+                break;
+            }
+
+            listener.processEvent(type, event);
+        }
     }
 
     destroy(): void {

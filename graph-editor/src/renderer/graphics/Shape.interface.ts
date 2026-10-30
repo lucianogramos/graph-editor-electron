@@ -1,6 +1,8 @@
+import { Dispatcher } from "./Dispatcher.interface";
+import { Listener } from "./Listener.interface";
 import { Vector2 } from "./Vector2";
 
-export interface Shape {
+export interface Shape extends Listener, Dispatcher{
     readonly position: Vector2;
     readonly draggable: boolean
 
