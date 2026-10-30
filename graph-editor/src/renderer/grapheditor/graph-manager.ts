@@ -244,18 +244,43 @@ export class GraphManager {
             this.graphicsGateway,
             this.edgeWeighted,
             this.edgeDirected,
-            weight
+            weight,
+            0,
+            false
         );
 
         this.edges.push(newEdge);
         
+        this.reindexParallelEdges(source.getId(), target.getId());
+
+        return newEdge;
+    }
+
+    public reindexParallelEdges(v1Id: number, v2Id: number): void {
+        const minV = Math.min(v1Id, v2Id);
+        const maxV = Math.max(v1Id, v2Id);
+
+        const allPairEdges = this.edges.filter(
+            e => (e.getSourceId() === minV && e.getTargetId() === maxV) ||
+                 (e.getSourceId() === maxV && e.getTargetId() === minV)
+        );
+
+        allPairEdges.forEach((edge, idx) => {
+            const forceInvert = edge.getSourceId() > edge.getTargetId();
+            edge.setParallelIndex(idx, forceInvert);
+
+            const s = this.vertices.find(v => v.getId() === edge.getSourceId());
+            const t = this.vertices.find(v => v.getId() === edge.getTargetId());
+            if (s && t) {
+                edge.updatePosition(s.getX(), s.getY(), t.getX(), t.getY());
+            }
+        });
+
         const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
             ? this.graphicsGateway.getKonvaLayer() 
             : (this.graphicsGateway as any).layer;
             
         if (konvaLayer) konvaLayer.batchDraw();
-
-        return newEdge;
     }
 
     private updateConnectedEdges(vertex: Vertex): void {
