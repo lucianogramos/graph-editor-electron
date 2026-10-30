@@ -2,12 +2,9 @@ import { Edge } from "./edge.interface";
 import { Vertex } from "./vertex.interface";
 
 export interface Graph {
-    addVertex: (v: Vertex) => number;
-    removeVertex: (v: Vertex) => void;
-    removeVertexByIndex: (index: number) => void;
-    connectVertices: (u: Vertex, v: Vertex, weight: number, directed: boolean) => Edge;
-    connectVerticesByIndex: (uIndex: number, vIndex: number, weight: number, directed: boolean) => Edge;
-    getVertexByIndex: (index: number) => Vertex;
-    getVertexByLabel: (label: string) => Vertex;
+    createVertex: (label?: string) => number;
+    removeVertex: (id: number) => boolean;
+    connectVertices: (uId: number, vId: number, weight: number, directed: boolean) => Edge | null;
+    getVertex: (id: number) => Vertex | undefined;
     getVertices: () => Vertex[];
 }

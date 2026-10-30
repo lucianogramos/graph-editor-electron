@@ -3,17 +3,19 @@ import { Vertex } from "./vertex.interface";
 
 export class VertexImpl implements Vertex {
     private _label: string;
+    private _adj: [Vertex, Edge][] = [];
+
     public get label(): string {
         return this._label;
     }
-
-    private _adj: [Vertex, Edge][] = [];
 
     public constructor(label: string = "") {
         this._label = label;
     }
 
     public addEdge(e: Edge): void {
+        if (e === undefined)
+            throw new Error('Undefined referente to edge.');
         this._adj.push([e.u === this ? e.v : e.u, e]);
     }
 
@@ -21,7 +23,7 @@ export class VertexImpl implements Vertex {
         for (let i = 0; i < this._adj.length; i++) {
             const [v, a] = this._adj[i];
             if (a === e) {
-                v.removeEdgeUnidirectionally(e);
+                if (!e.directed) v.removeEdgeUnidirectionally(e);
                 this._adj.splice(i, 1);
                 return;
             }
@@ -38,12 +40,14 @@ export class VertexImpl implements Vertex {
         }
     }
 
+    public removeAllEdgesIf(predicate: (e: Edge) => boolean): void {
+        this._adj = this._adj.filter((t) => !predicate(t[1]));
+    }
+
     public removeAllEdges(): void {
-        for (let i = this._adj.length - 1; i >= 0; i--) {
-            const [u, e] = this._adj[i];
-            if (!e.directed)
-                u.removeEdgeUnidirectionally(e);
-        }
+        const _this = this;
+        for (const [t, ] of this._adj)
+            t.removeAllEdgesIf(e => e.u === _this || e.v === _this);
         this._adj.length = 0;
     }
 
