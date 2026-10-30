@@ -1,6 +1,6 @@
 
 import Konva from "konva";
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./vector2";
 import { Direction, Text } from "./text.interface";
 import { Listener } from "./listener.interface";
 import { EventKeyMap } from "./event-key-map.interface";

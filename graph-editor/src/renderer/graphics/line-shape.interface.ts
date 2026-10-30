@@ -1,5 +1,5 @@
 import type { Shape } from "./shape.interface";
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./vector2";
 
 export interface LineShape extends Shape {
     readonly points: Vector2[];

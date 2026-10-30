@@ -1,6 +1,6 @@
 import { Dispatcher } from "./dispatcher.interface";
 import { Listener } from "./listener.interface";
-import { Vector2 } from "./Vector2";
+import { Vector2 } from "./vector2";
 
 export interface Shape extends Listener, Dispatcher{
     readonly position: Vector2;

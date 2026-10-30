@@ -1,10 +1,7 @@
-import Konva from 'konva';
-
 export class SemiEdge {
-    private line: Konva.Line;
-    private group: Konva.Group;
     private controlPoints: { x: number; y: number }[] = [];
     private currentEndPoint: { x: number; y: number } = { x: 0, y: 0 };
+    private lineId: string;
 
     constructor(
         private startX: number,
@@ -12,13 +9,11 @@ export class SemiEdge {
         private graphicsGateway: any,
         private directed: boolean = false
     ) {
-        this.group = new Konva.Group();
-
-        this.line = new Konva.Line({
+        this.lineId = this.graphicsGateway.createLine({
             points: [this.startX, this.startY, this.startX, this.startY],
             stroke: '#2c3e50',
             strokeWidth: 2,
-            dash: [4, 4], 
+            dash: [4, 4],
             tension: 0.3,
             pointerLength: this.directed ? 12 : 0,
             pointerWidth: this.directed ? 10 : 0,
@@ -26,17 +21,6 @@ export class SemiEdge {
             fill: '#2c3e50',
             listening: false
         });
-
-        this.group.add(this.line);
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-
-        if (konvaLayer) {
-            konvaLayer.add(this.group);
-            konvaLayer.batchDraw();
-        }
     }
 
     public addControlPoint(x: number, y: number): void {
@@ -66,25 +50,10 @@ export class SemiEdge {
         }
         pts.push(x, y);
 
-        this.line.points(pts);
-
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-
-        if (konvaLayer) {
-            konvaLayer.batchDraw();
-        }
+        this.graphicsGateway.updateLinePoints(this.lineId, pts);
     }
 
     public destroy(): void {
-        this.group.destroy();
-        const konvaLayer = typeof this.graphicsGateway.getKonvaLayer === 'function' 
-            ? this.graphicsGateway.getKonvaLayer() 
-            : (this.graphicsGateway as any).layer;
-
-        if (konvaLayer) {
-            konvaLayer.batchDraw();
-        }
+        this.graphicsGateway.removeLine(this.lineId);
     }
 }
