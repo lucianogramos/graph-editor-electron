@@ -1,8 +1,8 @@
 import Konva from "konva";
-import type { LineShape } from "./line-shape.interface"; 
-import { Vector2 } from "./vector2";
-import { EventKeyMap } from "./event-key-map.interface"; 
-import type { Listener } from "./listener.interface";
+import type { LineShape } from "../interface/line-shape.interface"; 
+import { Vector2 } from "../vector2";
+import { EventKeyMap } from "../interface/event-key-map.interface"; 
+import type { Listener } from "../interface/listener.interface";
 
 export class LineShapeImpl implements LineShape {
     private line: Konva.Line;
@@ -108,9 +108,25 @@ export class LineShapeImpl implements LineShape {
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
         callbacks.push(callback);
         this.callbacks[type] = callbacks;
+
+        if (callbacks.length === 1) {
+            this.line.on("click", (konvaEvent) => {
+            konvaEvent.cancelBubble = true;
+
+            const event = {
+                cancel: false,
+                target: this,
+                currentTarget: this,
+                domEvent: konvaEvent.evt
+            };
+
+            this.processEvent("click", event);
+            });
+        }
     }
     
     off<K extends keyof EventKeyMap>(type: K): void {
+        this.line.off("click");
         delete this.callbacks[type];
     }
     

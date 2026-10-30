@@ -1,8 +1,8 @@
 import Konva from "konva";
-import type { CircleShape } from "./circle-shape.interface"; 
-import type { Listener } from "./listener.interface";
-import type { EventKeyMap } from "./event-key-map.interface"; 
-import { Vector2 } from "./vector2";
+import type { CircleShape } from "../interface/circle-shape.interface"; 
+import type { Listener } from "../interface/listener.interface";
+import type { EventKeyMap } from "../interface/event-key-map.interface"; 
+import { Vector2 } from "../vector2";
 
 export class CircleShapeImpl implements CircleShape {
     private circle: Konva.Circle;
@@ -73,27 +73,40 @@ export class CircleShapeImpl implements CircleShape {
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
         callbacks.push(callback);
         this.callbacks[type] = callbacks;
+
+        if (callbacks.length === 1) {
+            this.circle.on("click", (konvaEvent) => {
+            konvaEvent.cancelBubble = true;
+
+            const event = {
+                cancel: false,
+                target: this,
+                currentTarget: this,
+                domEvent: konvaEvent.evt
+            };
+
+            this.processEvent("click", event);
+            });
+        }
     }
 
     off<K extends keyof EventKeyMap>(type: K): void {
+        this.circle.off("click");
         delete this.callbacks[type];
     }
 
     
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    
         const callbacks = this.callbacks[type];
 
-        if (!callbacks) {
-            return;
-        }
-
-        for (const callback of [...callbacks]) {
-            if (event.cancel) {
-                break;
+        if (callbacks) {
+            for (const callback of [...callbacks]) {
+                callback(event);
             }
-
-            callback(event);
         }
+
+        this.dispatchEvent(type, event);
     }
     
     addListener(listener: Listener): void {
@@ -103,14 +116,17 @@ export class CircleShapeImpl implements CircleShape {
     }
 
     dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-        this.processEvent(type, event);
 
+        if (event.cancel) {
+            return;
+        }
         for (const listener of [...this.listeners]) {
-            if (event.cancel) {
-                break;
-            }
-
-            listener.processEvent(type, event);
+            const newEvent = {
+                ...event,
+                currentTarget: listener
+            };
+            
+            listener.processEvent(type, newEvent);
         }
     }
 

@@ -1,9 +1,9 @@
 import Konva from "konva";
-import type { Layer } from "./layer.interface";
+import type { Layer } from "../interface/layer.interface";
 import { LayerImpl } from "./layer-impl"; 
-import { Listener } from "./listener.interface";
-import { EventKeyMap } from "./event-key-map.interface";
-import { Canvas } from "./canvas.interface";
+import { Listener } from "../interface/listener.interface";
+import { EventKeyMap } from "../interface/event-key-map.interface"; 
+import { Canvas } from "../interface/canvas.interface"; 
 
 export class CanvasImpl<T> implements Canvas {
     private stage: Konva.Stage;
@@ -73,9 +73,25 @@ export class CanvasImpl<T> implements Canvas {
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
         callbacks.push(callback);
         this.callbacks[type] = callbacks;
+
+        if (callbacks.length === 1) {
+            this.stage.on("click", (konvaEvent) => {
+            konvaEvent.cancelBubble = true;
+
+            const event = {
+                cancel: false,
+                target: this,
+                currentTarget: this,
+                domEvent: konvaEvent.evt
+            };
+
+            this.processEvent("click", event);
+            });
+        }
     }
         
     off<K extends keyof EventKeyMap>(type: K): void {
+        this.stage.off("click");
         delete this.callbacks[type];
     }
         

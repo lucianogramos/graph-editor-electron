@@ -1,9 +1,9 @@
 
 import Konva from "konva";
-import { Vector2 } from "./vector2";
-import { Direction, Text } from "./text.interface";
-import { Listener } from "./listener.interface";
-import { EventKeyMap } from "./event-key-map.interface";
+import { Vector2 } from "../vector2";
+import { Direction, Text } from "../interface/text.interface"; 
+import { Listener } from "../interface/listener.interface";
+import { EventKeyMap } from "../interface/event-key-map.interface"; 
 
 export class TextImpl implements Text {
     private konvaText: Konva.Text;
@@ -12,7 +12,7 @@ export class TextImpl implements Text {
 
     constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr") {
         this.konvaText = new Konva.Text({
-            x: y,
+            x: x,
             y: y,
             text: text,
             fontSize: fontSize,
@@ -194,9 +194,25 @@ export class TextImpl implements Text {
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
         callbacks.push(callback);
         this.callbacks[type] = callbacks;
+
+        if (callbacks.length === 1) {
+            this.konvaText.on("click", (konvaEvent) => {
+            konvaEvent.cancelBubble = true;
+
+            const event = {
+                cancel: false,
+                target: this,
+                currentTarget: this,
+                domEvent: konvaEvent.evt
+            };
+
+            this.processEvent("click", event);
+            });
+        }
     }
 
     off<K extends keyof EventKeyMap>(type: K): void {
+        this.konvaText.off("click");
         delete this.callbacks[type];
     }
 
