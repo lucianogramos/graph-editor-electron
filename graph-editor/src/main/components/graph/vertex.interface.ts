@@ -5,7 +5,7 @@ export interface Vertex {
     addEdge: (e: Edge) => void;
     removeEdge: (e: Edge) => void;
     removeAllEdges: () => void;
-    unidirectionalEdgeRemoval: (e: Edge) => void
+    removeEdgeUnidirectionally: (e: Edge) => void
     getAdjacencyList: () => Edge[];
     getAdjacentVertices: () => Vertex[];
     setLabel: (label: string) => void;
