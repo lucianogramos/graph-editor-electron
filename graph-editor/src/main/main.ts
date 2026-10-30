@@ -24,13 +24,19 @@ app.on('window-all-closed', () => {
     }
 });
 
-ipcMain.handle(IPC_CHANNELS.GET_THEME, () => {
-    return themeService.getCurrentTheme();
-})
-
 ipcMain.on(IPC_CHANNELS.QUIT, () => {
     app.quit();
 });
+
+// Theme Channels
+
+ipcMain.handle(IPC_CHANNELS.GET_THEME, () => {
+    return themeService.getCurrentTheme();
+});
+
+ipcMain.handle(IPC_CHANNELS.GET_THEME_COLORS, () => {
+    return themeService.getCurrentThemeColors();
+})
 
 ipcMain.on(IPC_CHANNELS.CHANGE_THEME, (_, theme: Themes) => {
     themeService.setCurrentTheme(theme);
@@ -48,5 +54,9 @@ ipcMain.handle(IPC_CHANNELS.REMOVER_VERTEX, (_, id: number) => {
 });
 
 ipcMain.handle(IPC_CHANNELS.ADD_EDGE, (_, uId: number, vId: number, weight: number, directed: boolean) => {
-    return graph.connectVertices(uId, vId, weight, directed) !== null;
+    return graph.connectVertices(uId, vId, weight, directed);
+});
+
+ipcMain.handle(IPC_CHANNELS.REMOVE_EDGE, (_, id: number) => {
+    return graph.disconnectVertices(id);
 });
