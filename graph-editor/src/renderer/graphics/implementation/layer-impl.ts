@@ -1,10 +1,10 @@
 import Konva from "konva";
-import type { Layer } from "./layer.interface"; 
-import { Shape } from "./shape.interface";
+import type { Layer } from "../interface/layer.interface"; 
+import { Shape } from "../interface/shape.interface";
 import { LineShapeImpl } from "./line-shape-impl"; 
 import { CircleShapeImpl } from "./circle-shape-impl";
 import { EventKeyMap } from "./event-key-map.interface";
-import { Listener } from "./listener.interface";
+import { Listener } from "../interface/listener.interface";
 
 export class LayerImpl implements Layer {
     private layer: Konva.Layer;
@@ -56,9 +56,25 @@ export class LayerImpl implements Layer {
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
         callbacks.push(callback);
         this.callbacks[type] = callbacks;
+
+        if (callbacks.length === 1) {
+            this.layer.on("click", (konvaEvent) => {
+            konvaEvent.cancelBubble = true;
+
+            const event = {
+                cancel: false,
+                target: this,
+                currentTarget: this,
+                domEvent: konvaEvent.evt
+            };
+
+            this.processEvent("click", event);
+            });
+        }
     }
 
     off<K extends keyof EventKeyMap>(type: K): void {
+        this.layer.off("click");
         delete this.callbacks[type];
     }
 
