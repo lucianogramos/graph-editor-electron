@@ -2,9 +2,13 @@
 import Konva from "konva";
 import { Vector2 } from "./Vector2";
 import { Direction, Text } from "./Text.interface";
+import { EventKeyMap } from "./EventKeyMap.interface";
+import { Listener } from "./Listener.interface";
 
 export class TextImpl implements Text {
     private konvaText: Konva.Text;
+    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private listeners: Listener[] = [];
 
     constructor(x: number, y: number, text: string,fontSize: number = 16) {
         this.konvaText = new Konva.Text({
@@ -184,5 +188,50 @@ export class TextImpl implements Text {
 
     getKonvaShape(): Konva.Text {
         return this.konvaText;
+    }
+
+    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        callbacks.push(callback);
+        this.callbacks[type] = callbacks;
+    }
+
+    off<K extends keyof EventKeyMap>(type: K): void {
+        delete this.callbacks[type];
+    }
+
+    
+    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        const callbacks = this.callbacks[type];
+
+        if (!callbacks) {
+            return;
+        }
+
+        for (const callback of [...callbacks]) {
+            if (event.cancel) {
+                break;
+            }
+
+            callback(event);
+        }
+    }
+    
+    addListener(listener: Listener): void {
+        if (!this.listeners.includes(listener)) {
+            this.listeners.push(listener);
+        }
+    }
+
+    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+        this.processEvent(type, event);
+
+        for (const listener of [...this.listeners]) {
+            if (event.cancel) {
+                break;
+            }
+
+            listener.processEvent(type, event);
+        }
     }
 }
