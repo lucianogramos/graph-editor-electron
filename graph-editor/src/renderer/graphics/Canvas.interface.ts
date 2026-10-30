@@ -1,6 +1,7 @@
 import type { Layer } from "./Layer.interface";
+import { Listener } from "./Listener.interface";
 
-export interface Canvas {
+export interface Canvas extends Listener{
     readonly width: number;
     readonly height: number;
     readonly draggable: boolean;
