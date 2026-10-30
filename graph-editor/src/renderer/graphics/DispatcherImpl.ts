@@ -1,6 +1,6 @@
-import { Dispatcher } from "./Dispatcher";
-import { EventKeyMap } from "./EventKeyMap";
-import { Listener } from "./Listener";
+import { Dispatcher } from "./Dispatcher.interface";
+import { EventKeyMap } from "./EventKeyMap.interface";
+import { Listener } from "./Listener.interface";
 
 export class DispatcherImpl implements Dispatcher {
     private listerners: Listener[] = [];

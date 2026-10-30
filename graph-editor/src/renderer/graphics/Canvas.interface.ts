@@ -1,4 +1,4 @@
-import type { Layer } from "./Layer";
+import type { Layer } from "./Layer.interface";
 
 export interface Canvas {
     readonly width: number;
