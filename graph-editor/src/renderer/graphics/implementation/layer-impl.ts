@@ -80,18 +80,19 @@ export class LayerImpl implements Layer {
 
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks[type];
+        
+        const newEvent = {
+                ...event,
+                currentTarget: this
+            };
 
-        if (!callbacks) {
-            return;
-        }
-
-        for (const callback of [...callbacks]) {
-            if (event.cancel) {
-                break;
+        if (callbacks) {
+            for (const callback of [...callbacks]) {
+                callback(newEvent);
             }
-
-            callback(event);
         }
+
+        this.dispatchEvent(type, event);
     }
 
     addListener(listener: Listener): void {
@@ -101,13 +102,11 @@ export class LayerImpl implements Layer {
     }
 
     dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-        this.processEvent(type, event);
 
-        for (const listener of [...this.listeners]) {
-            if (event.cancel) {
-                break;
-            }
-
+        if (event.cancel) {
+            return;
+        }
+        for (const listener of [...this.listeners]) {            
             listener.processEvent(type, event);
         }
     }

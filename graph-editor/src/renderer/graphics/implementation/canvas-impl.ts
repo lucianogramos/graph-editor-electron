@@ -99,16 +99,15 @@ export class CanvasImpl<T> implements Canvas {
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks[type];
         
-        if (!callbacks) {
-            return;
-        }
-        
-        for (const callback of [...callbacks]) {
-            if (event.cancel) {
-                break;
+        const newEvent = {
+                ...event,
+                currentTarget: this
+            };
+
+        if (callbacks) {
+            for (const callback of [...callbacks]) {
+                callback(newEvent);
             }
-        
-            callback(event);
         }
     }
 }

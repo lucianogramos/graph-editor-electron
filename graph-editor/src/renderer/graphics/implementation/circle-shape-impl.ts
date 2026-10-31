@@ -97,12 +97,16 @@ export class CircleShapeImpl implements CircleShape {
 
     
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-    
         const callbacks = this.callbacks[type];
+        
+        const newEvent = {
+                ...event,
+                currentTarget: this
+            };
 
         if (callbacks) {
             for (const callback of [...callbacks]) {
-                callback(event);
+                callback(newEvent);
             }
         }
 
@@ -120,13 +124,8 @@ export class CircleShapeImpl implements CircleShape {
         if (event.cancel) {
             return;
         }
-        for (const listener of [...this.listeners]) {
-            const newEvent = {
-                ...event,
-                currentTarget: listener
-            };
-            
-            listener.processEvent(type, newEvent);
+        for (const listener of [...this.listeners]) {            
+            listener.processEvent(type, event);
         }
     }
 
