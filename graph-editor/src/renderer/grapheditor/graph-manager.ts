@@ -1,17 +1,13 @@
 import { Vertex } from './vertex';
 import { Edge } from './edge';
-import { SemiEdge } from './semiEdge'; 
-import { ToolManager } from './ToolManager';
+import { SemiEdge } from './semi-edge'; 
+import { ToolManager } from './tool-manager';
 import * as Graphics from '../graphics/graphics-gateway';
-import { CircleShape } from '../graphics/circle-shape.interface';
-import { Text } from '../graphics/text.interface';
-import { Layer } from '../graphics/layer.interface';
+import { Layer } from '../graphics/interface/layer.interface';
 
 export class GraphManager {
     private vertices: Vertex[] = [];
     private edges: Edge[] = [];
-    
-    private vertexShapes: Map<Vertex, { circle: CircleShape, text: Text }> = new Map();
     
     private firstSelectedVertex: Vertex | null = null;
     private semiEdge: SemiEdge | null = null; 
@@ -31,46 +27,24 @@ export class GraphManager {
         this.activeTool = this.toolManager.getActiveTool();
     }
 
-    public addVertex(x: number, y: number): Vertex {
-        let nextId = 1;
-        if (this.vertices.length > 0) {
-            const existingIds = this.vertices.map(v => v.getId()).sort((a, b) => a - b);
-            nextId = existingIds.length + 1;
-            for (let i = 0; i < existingIds.length; i++) {
-                if (existingIds[i] !== i + 1) {
-                    nextId = i + 1;
-                    break;
-                }
+    public async addVertex(x: number, y: number): Promise<Vertex> {
+        let backendId = Date.now();
+        if ((window as any).api?.addVertex) {
+            try {
+                backendId = await (window as any).api.addVertex();
+            } catch (error) {
+                console.error("Erro ao obter ID do vértice no backend:", error);
             }
         }
 
-        const newVertex = new Vertex(x, y, nextId);
-        const initialLabel = newVertex.getId().toString();
-        newVertex.setLabel(initialLabel);
+        const newVertex = new Vertex(x, y, backendId, this.layer);
         
-        const circleShape = Graphics.createCircle(x, y, 25);
-        const textShape = Graphics.createText(x - 15, y - 7, initialLabel, 14);
-        
-        textShape.fill('#ffffff');
-        textShape.setFontStyle('bold');
-        textShape.setTextAlign('center');
-        textShape.setWidth(30);
-
-        this.layer.addShape(circleShape);
-        this.layer.addShape(textShape);
-        this.layer.batchDraw();
-
-        this.vertexShapes.set(newVertex, { circle: circleShape, text: textShape });
-
-        circleShape.setDraggable(this.activeTool === 'select');
-
-        circleShape.on('click', () => {
-            this.handleVertexClick(newVertex);
-        });
-
+        newVertex.setDraggable(this.activeTool === 'select');
         newVertex.addObserver((type, eventData) => this.processEvent(type, eventData));
 
         this.vertices.push(newVertex);
+        this.layer.batchDraw();
+        
         console.log(`Vertex created with ID ${newVertex.getId()} at (${x}, ${y}). Total vertices: ${this.vertices.length}`);
         
         return newVertex;
@@ -86,14 +60,11 @@ export class GraphManager {
 
     public setTool(tool: string): void {
         this.activeTool = tool;
+        
         const isSelectMode = (tool === 'select');
         
         for (const vertex of this.vertices) {
             vertex.setDraggable(isSelectMode);
-            const shapes = this.vertexShapes.get(vertex);
-            if (shapes && shapes.circle) {
-                shapes.circle.setDraggable(isSelectMode);
-            }
         }
         
         if (tool !== 'edge') {
@@ -121,7 +92,8 @@ export class GraphManager {
         if (!this.firstSelectedVertex) {
             this.firstSelectedVertex = vertex;
             this.cleanupSemiEdge();
-            this.semiEdge = new SemiEdge(vertex.getX(), vertex.getY(), Graphics, this.edgeDirected);
+            this.semiEdge = new SemiEdge(vertex.getX(), vertex.getY(), Graphics, this.edgeDirected, this.layer);
+            this.layer.batchDraw();
             console.log(`First vertex selected (ID: ${vertex.getId()}).`);
         } else {
             console.log(`Second vertex selected (ID: ${vertex.getId()}). Creating edge...`);
@@ -134,6 +106,7 @@ export class GraphManager {
     public updateSemiEdgePointer(x: number, y: number): void {
         if (this.semiEdge) {
             this.semiEdge.updateEndPoint(x, y);
+            this.layer.batchDraw();
         }
     }
 
@@ -141,12 +114,21 @@ export class GraphManager {
         if (this.semiEdge) {
             this.semiEdge.destroy();
             this.semiEdge = null;
+            this.layer.batchDraw();
         }
     }
 
-    public addEdge(source: Vertex, target: Vertex): Edge {
+    public async addEdge(source: Vertex, target: Vertex): Promise<Edge | null> {
         const weight = this.edgeWeighted ? this.edgeWeightValue : 1; 
         
+        if ((window as any).api?.addEdge) {
+            try {
+                await (window as any).api.addEdge();
+            } catch (error) {
+                console.error("Erro ao registar aresta no backend:", error);
+            }
+        }
+
         const newEdge = new Edge(
             source.getId(),
             target.getId(),
@@ -158,7 +140,8 @@ export class GraphManager {
             this.edgeDirected,
             weight,
             0,
-            false
+            false,
+            this.layer
         );
 
         newEdge.onClick(() => {
@@ -186,8 +169,16 @@ export class GraphManager {
         console.log(`Edge between ${sourceId} and ${targetId} deleted.`);
     }
 
-    public removeVertex(vertex: Vertex): void {
+    public async removeVertex(vertex: Vertex): Promise<void> {
         const vertexId = vertex.getId();
+
+        if ((window as any).api?.removeVertex) {
+            try {
+                await (window as any).api.removeVertex();
+            } catch (error) {
+                console.error("Erro ao remover vértice no backend:", error);
+            }
+        }
 
         const connectedEdges = this.edges.filter(edge => edge.isConnectedTo(vertexId));
         
@@ -204,14 +195,7 @@ export class GraphManager {
             this.reindexParallelEdges(v1, v2);
         });
 
-        const shapes = this.vertexShapes.get(vertex);
-        if (shapes) {
-            this.layer.removeShape(shapes.circle);
-            this.layer.removeShape(shapes.text);
-            shapes.circle.destroy();
-            shapes.text.destroy();
-            this.vertexShapes.delete(vertex);
-        }
+        vertex.destroy();
 
         this.vertices = this.vertices.filter(v => v !== vertex);
         this.layer.batchDraw();

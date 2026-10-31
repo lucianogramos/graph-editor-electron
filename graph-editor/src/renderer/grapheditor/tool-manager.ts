@@ -1,6 +1,3 @@
-import { Canvas } from '../graphics/canvas.interface';
-import { GraphManager } from './graph-manager';
-
 export type ToolType = 'select' | 'vertex' | 'edge' | 'eraser';
 
 export class ToolManager {
@@ -27,7 +24,7 @@ export class ToolManager {
         this.listeners.forEach(callback => callback(this.activeTool));
     }
 
-    public init(canvas?: Canvas, graphManager?: GraphManager): void {
+    public init(): void {
         const toolButtons: { ids: string[]; tool: ToolType }[] = [
             { ids: ['btn-select', 'btn-select-tool'], tool: 'select' },
             { ids: ['btn-vertex', 'btn-vertex-tool'], tool: 'vertex' },
@@ -60,32 +57,5 @@ export class ToolManager {
                 case 'r': this.setTool('eraser'); break;
             }
         });
-
-        if (canvas && graphManager) {
-            canvas.on('click', (event: any) => {
-                if (this.getActiveTool() === 'vertex') {
-                    const editorElem = document.getElementById("editor") as HTMLDivElement;
-                    if (!editorElem) return;
-
-                    let x = 0;
-                    let y = 0;
-
-                    const domEvent = event.domEvent || event.evt || event;
-                    if (domEvent && domEvent.clientX !== undefined) {
-                        const rect = editorElem.getBoundingClientRect();
-                        x = domEvent.clientX - rect.left;
-                        y = domEvent.clientY - rect.top;
-                    } else if (event.x !== undefined && event.y !== undefined) {
-                        x = event.x;
-                        y = event.y;
-                    }
-
-                    if (x !== 0 || y !== 0) {
-                        graphManager.addVertex(x, y);
-                        console.log(`ToolManager: Vértice criado em (${x}, ${y})`);
-                    }
-                }
-            });
-        }
     }
 }

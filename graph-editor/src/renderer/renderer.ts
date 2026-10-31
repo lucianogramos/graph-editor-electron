@@ -1,7 +1,7 @@
 import { titleBarInit } from "./title-bar";
 import { GraphManager } from "./grapheditor/graph-manager";
-import { LayerImpl } from "./graphics/layer-impl";
-import { ToolManager, ToolType } from "./grapheditor/ToolManager";
+import { LayerImpl } from "./graphics/implementation/layer-impl";
+import { ToolManager, ToolType } from "./grapheditor/tool-manager";
 import * as Graphics from "./graphics/graphics-gateway";
 
 titleBarInit();
@@ -28,7 +28,51 @@ graphicsLayer.draw();
 const toolManager = new ToolManager();
 const graphManager = new GraphManager(toolManager, graphicsLayer);
 
-toolManager.init(canvas, graphManager);
+toolManager.init();
+
+function getLogicalCoordinates(domEvent: MouseEvent): { x: number; y: number } {
+    const rect = editorElem.getBoundingClientRect();
+    const screenX = domEvent.clientX - rect.left;
+    const screenY = domEvent.clientY - rect.top;
+
+    const stage = 
+        (canvas as any).getStage?.() || 
+        (editorElem as any).__konvaStage || 
+        (window as any).Konva?.stages?.[0];
+
+    if (stage) {
+        const scale = stage.scaleX() || 1;
+        const stageX = stage.x() || 0;
+        const stageY = stage.y() || 0;
+
+        return {
+            x: (screenX - stageX) / scale,
+            y: (screenY - stageY) / scale
+        };
+    }
+
+    return { x: screenX, y: screenY };
+}
+
+canvas.on('click', async (event: any) => {
+    if (toolManager.getActiveTool() === 'vertex') {
+        const domEvent = event.domEvent || event.evt || event;
+        
+        if (domEvent && domEvent.clientX !== undefined) {
+            const coords = getLogicalCoordinates(domEvent);
+            if (coords.x !== 0 || coords.y !== 0) {
+                await graphManager.addVertex(coords.x, coords.y);
+            }
+        }
+    }
+});
+
+editorElem.addEventListener('mousemove', (domEvent: MouseEvent) => {
+    const coords = getLogicalCoordinates(domEvent);
+    if (coords.x !== 0 || coords.y !== 0) {
+        graphManager.updateSemiEdgePointer(coords.x, coords.y);
+    }
+});
 
 const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;        
 const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
@@ -46,42 +90,26 @@ function setActiveToolButton(btn: HTMLButtonElement | null) {
     currentToolButton = btn;
 }
 
-if (btnSelect) {
-    btnSelect.addEventListener('click', () => {
-        toolManager.setTool('select');
-        setActiveToolButton(btnSelect);
-    });
-}
-
-if (btnAddVertex) {
-    btnAddVertex.addEventListener('click', () => {
-        toolManager.setTool('vertex');
-        setActiveToolButton(btnAddVertex);
-    });
-}
-
 if (btnAddEdge) {
-    if (btnAddEdge) {
-        btnAddEdge.addEventListener('click', () => {   
-            const isAlreadyEdge = toolManager.getActiveTool() === 'edge';
-            
-            if (isAlreadyEdge) {
-                const isSelected = btnAddEdge.getAttribute('data-selected') === 'true';
-                btnAddEdge.setAttribute('data-selected', isSelected ? 'false' : 'true');
-            } else {
-                toolManager.setTool('edge');
-                setActiveToolButton(btnAddEdge);
-                updateEdgeParameters();
-            }
-        });
-    }
-}
+    btnAddEdge.addEventListener('click', (e) => {
+        e.stopImmediatePropagation();
+        e.preventDefault();
 
-if (btnEraser) {
-    btnEraser.addEventListener('click', () => {
-        toolManager.setTool('eraser');
-        setActiveToolButton(btnEraser);
-    });
+        const currentTool = toolManager.getActiveTool();
+        if (currentTool !== 'edge') {
+            toolManager.setTool('edge');
+            updateEdgeParameters();
+        } else {
+            btnAddEdge.setAttribute('data-selected', 'false');
+            currentToolButton = null;
+            toolManager.setTool('select' as any);
+            graphManager.disableEdgeCreation();
+            if (weightInputContainer) {
+                weightInputContainer.classList.remove('flex');
+                weightInputContainer.classList.add('hidden');
+            }
+        }
+    }, true);
 }
 
 let edgeTypeSelected = false;
@@ -169,6 +197,11 @@ function updateEdgeParameters() {
 toolManager.onToolChange((tool: ToolType) => {
     graphManager.setTool(tool);
     canvas.setDraggable(tool !== 'eraser');
+
+    if (tool === 'select') setActiveToolButton(btnSelect);
+    else if (tool === 'vertex') setActiveToolButton(btnAddVertex);
+    else if (tool === 'edge') setActiveToolButton(btnAddEdge);
+    else if (tool === 'eraser') setActiveToolButton(btnEraser);
 
     if (tool === 'edge') {
         updateEdgeParameters();
