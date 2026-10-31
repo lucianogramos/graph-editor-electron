@@ -1,3 +1,5 @@
+import { getCurrentTheme, updateTheme } from "./theme";
+
 export async function titleBarInit() {
     let currentDropdownMenuOpen: HTMLElement | null = null;
 
@@ -45,12 +47,12 @@ export async function titleBarInit() {
     })
 
     const toggleThemeButton = document.getElementById('toggle-theme-button') as HTMLDivElement;
-    const theme = await window.api.getTheme();
+    const theme = getCurrentTheme();
     toggleThemeButton.setAttribute('data-theme', theme);
     if (theme === 'dark')
         document.body.classList.add('dark');
 
-    toggleThemeButton.addEventListener('click', () => {
+    toggleThemeButton.addEventListener('click', async () => {
         const currentTheme = toggleThemeButton.getAttribute('data-theme') as ('light' | 'dark');
         let newTheme: 'light' | 'dark';
         if (currentTheme === 'light') {
@@ -63,6 +65,7 @@ export async function titleBarInit() {
         }
 
         toggleThemeButton.setAttribute('data-theme', newTheme);
-        window.api.changeTheme(newTheme);
+        await window.api.changeTheme(newTheme);
+        updateTheme();
     });
 }

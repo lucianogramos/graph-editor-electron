@@ -14,7 +14,7 @@ export interface Api {
     quit: () => void;
     getTheme: () => Promise<Themes>;
     getThemeColors: () => Promise<ThemeColors>;
-    changeTheme: (theme: Themes) => void;
+    changeTheme: (theme: Themes) => Promise<void>;
     addVertex: (label?: string) => Promise<number>;
     removeVertex: (id: number) => Promise<boolean>;
     addEdge: (uId: number, vId: number, weight: number, directed: boolean) => Promise<number>;

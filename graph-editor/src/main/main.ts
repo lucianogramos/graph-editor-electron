@@ -38,7 +38,7 @@ ipcMain.handle(IPC_CHANNELS.GET_THEME_COLORS, () => {
     return themeService.getCurrentThemeColors();
 })
 
-ipcMain.on(IPC_CHANNELS.CHANGE_THEME, (_, theme: Themes) => {
+ipcMain.handle(IPC_CHANNELS.CHANGE_THEME, (_, theme: Themes) => {
     themeService.setCurrentTheme(theme);
     appWindow.updateTheme();
 });

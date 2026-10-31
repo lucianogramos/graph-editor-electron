@@ -1,4 +1,4 @@
-import { Api } from './ipc'
+import type { Api } from './ipc'
 
 declare global {
     interface Window {

@@ -19,6 +19,7 @@ async function build() {
         outdir: 'dist/renderer',
         platform: 'browser',
         sourcemap: true,
+        format: 'esm',
         tsconfig: 'tsconfig.renderer.json'
     });
     console.log('src/renderer/renderer.ts: Build completed successfully');

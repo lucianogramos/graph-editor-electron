@@ -3,7 +3,9 @@ import { GraphManager } from "./grapheditor/graph-manager";
 import { LayerImpl } from "./graphics/implementation/layer-impl";
 import { ToolManager, ToolType } from "./grapheditor/tool-manager";
 import * as Graphics from "./graphics/graphics-gateway";
+import { updateTheme } from "./theme";
 
+await updateTheme();
 titleBarInit();
 
 const editorElem = document.getElementById("editor") as HTMLDivElement;
