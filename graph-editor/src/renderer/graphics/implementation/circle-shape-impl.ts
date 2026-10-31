@@ -6,17 +6,17 @@ import { Vector2 } from "../vector2";
 
 export class CircleShapeImpl implements CircleShape {
     private circle: Konva.Circle;
-    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, radius: number, fill: string = "blue", stroke: string = "black", strokeWidth: number = 2, draggable: boolean = false) {
+    constructor(x: number, y: number, radius: number, fill: string = "blue", border: string = "black", borderWidth: number = 2, draggable: boolean = false) {
         this.circle = new Konva.Circle({
             x: x,
             y: y,
             radius: radius,
             fill: fill,
-            stroke: stroke,
-            strokeWidth: strokeWidth,
+            stroke: border,
+            strokeWidth: borderWidth,
             draggable: draggable
         })
     }
@@ -70,44 +70,46 @@ export class CircleShapeImpl implements CircleShape {
     }
 
     on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
-        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        if (!this.callbacks.has(type))
+            this.callbacks.set(type, []);
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
         callbacks.push(callback);
-        this.callbacks[type] = callbacks;
 
         if (callbacks.length === 1) {
-            this.circle.on("click", (konvaEvent) => {
-            konvaEvent.cancelBubble = true;
+                this.circle.on(type, (konvaEvent) => {
+                konvaEvent.cancelBubble = true;
 
-            const event = {
-                cancel: false,
-                target: this,
-                currentTarget: this,
-                domEvent: konvaEvent.evt
-            };
+                const event: EventKeyMap[K] = {
+                    cancel: false,
+                    target: this,
+                    currentTarget: this,
+                    domEvent: konvaEvent.evt
+                };
 
-            this.processEvent("click", event);
+                this.processEvent(type, event);
             });
         }
     }
 
     off<K extends keyof EventKeyMap>(type: K): void {
-        this.circle.off("click");
-        delete this.callbacks[type];
+        this.circle.off(type);
+        this.callbacks.delete(type);
     }
 
     
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-        const callbacks = this.callbacks[type];
+        const callbacks = this.callbacks.get(type);
         
-        const newEvent = {
-                ...event,
-                currentTarget: this
-            };
+        const newEvent: EventKeyMap[K] = {
+            ...event,
+            currentTarget: this,
+        };
 
         if (callbacks) {
-            for (const callback of [...callbacks]) {
+            for (const callback of callbacks) {
                 callback(newEvent);
             }
+            event.cancel = newEvent.cancel;
         }
 
         this.dispatchEvent(type, event);
@@ -124,7 +126,7 @@ export class CircleShapeImpl implements CircleShape {
         if (event.cancel) {
             return;
         }
-        for (const listener of [...this.listeners]) {            
+        for (const listener of this.listeners) {            
             listener.processEvent(type, event);
         }
     }

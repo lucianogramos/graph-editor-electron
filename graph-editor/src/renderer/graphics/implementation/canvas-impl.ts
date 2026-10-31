@@ -1,14 +1,12 @@
 import Konva from "konva";
 import type { Layer } from "../interface/layer.interface";
 import { LayerImpl } from "./layer-impl"; 
-import { Listener } from "../interface/listener.interface";
 import { EventKeyMap } from "../interface/event-key-map.interface"; 
 import { Canvas } from "../interface/canvas.interface"; 
 
-export class CanvasImpl<T> implements Canvas {
+export class CanvasImpl implements Canvas {
     private stage: Konva.Stage;
-    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
-    private listeners: Listener[] = [];
+    private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
 
     constructor(container: string, width: number, height: number) {
         this.stage = new Konva.Stage({
@@ -70,42 +68,43 @@ export class CanvasImpl<T> implements Canvas {
     }
 
     on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
-        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        if (!this.callbacks.has(type))
+            this.callbacks.set(type, []);
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
         callbacks.push(callback);
-        this.callbacks[type] = callbacks;
 
         if (callbacks.length === 1) {
-            this.stage.on("click", (konvaEvent) => {
-            konvaEvent.cancelBubble = true;
+                this.stage.on(type, (konvaEvent) => {
+                konvaEvent.cancelBubble = true;
 
-            const event = {
-                cancel: false,
-                target: this,
-                currentTarget: this,
-                domEvent: konvaEvent.evt
-            };
+                const event: EventKeyMap[K] = {
+                    cancel: false,
+                    target: this,
+                    currentTarget: this,
+                    domEvent: konvaEvent.evt
+                };
 
-            this.processEvent("click", event);
+                this.processEvent(type, event);
             });
         }
     }
         
     off<K extends keyof EventKeyMap>(type: K): void {
-        this.stage.off("click");
-        delete this.callbacks[type];
+        this.stage.off(type);
+        this.callbacks.delete(type);
     }
         
             
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-        const callbacks = this.callbacks[type];
+        const callbacks = this.callbacks.get(type);
         
         const newEvent = {
-                ...event,
-                currentTarget: this
-            };
+            ...event,
+            currentTarget: this
+        };
 
         if (callbacks) {
-            for (const callback of [...callbacks]) {
+            for (const callback of callbacks) {
                 callback(newEvent);
             }
         }

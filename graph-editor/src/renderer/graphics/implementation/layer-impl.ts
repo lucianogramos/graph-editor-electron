@@ -8,7 +8,7 @@ import { Listener } from "../interface/listener.interface";
 
 export class LayerImpl implements Layer {
     private layer: Konva.Layer;
-    private callbacks: {[K in keyof EventKeyMap]?: Array<(event: EventKeyMap[K]) => void>;} = {};
+    private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
     constructor() {
@@ -53,43 +53,45 @@ export class LayerImpl implements Layer {
     }
     
     on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
-        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks[type] ?? [];
+        if (!this.callbacks.has(type))
+            this.callbacks.set(type, []);
+        const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
         callbacks.push(callback);
-        this.callbacks[type] = callbacks;
 
         if (callbacks.length === 1) {
-            this.layer.on("click", (konvaEvent) => {
-            konvaEvent.cancelBubble = true;
+                this.layer.on(type, (konvaEvent) => {
+                konvaEvent.cancelBubble = true;
 
-            const event = {
-                cancel: false,
-                target: this,
-                currentTarget: this,
-                domEvent: konvaEvent.evt
-            };
+                const event: EventKeyMap[K] = {
+                    cancel: false,
+                    target: this,
+                    currentTarget: this,
+                    domEvent: konvaEvent.evt
+                };
 
-            this.processEvent("click", event);
+                this.processEvent(type, event);
             });
         }
     }
 
     off<K extends keyof EventKeyMap>(type: K): void {
-        this.layer.off("click");
-        delete this.callbacks[type];
+        this.layer.off(type);
+        this.callbacks.delete(type);
     }
 
     processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
-        const callbacks = this.callbacks[type];
+        const callbacks = this.callbacks.get(type);
         
         const newEvent = {
-                ...event,
-                currentTarget: this
-            };
+            ...event,
+            currentTarget: this
+        };
 
         if (callbacks) {
-            for (const callback of [...callbacks]) {
+            for (const callback of callbacks) {
                 callback(newEvent);
             }
+            event.cancel = newEvent.cancel;
         }
 
         this.dispatchEvent(type, event);
@@ -106,7 +108,7 @@ export class LayerImpl implements Layer {
         if (event.cancel) {
             return;
         }
-        for (const listener of [...this.listeners]) {            
+        for (const listener of this.listeners) {            
             listener.processEvent(type, event);
         }
     }
