@@ -3,8 +3,10 @@ import type { Layer } from "../interface/layer.interface";
 import { Shape } from "../interface/shape.interface";
 import { LineShapeImpl } from "./line-shape-impl"; 
 import { CircleShapeImpl } from "./circle-shape-impl";
+import { TextImpl } from "./text-impl";
 import { EventKeyMap } from "../interface/event-key-map.interface"; 
 import { Listener } from "../interface/listener.interface";
+
 
 export class LayerImpl implements Layer {
     private layer: Konva.Layer;
@@ -25,6 +27,10 @@ export class LayerImpl implements Layer {
         }
 
         if (shape instanceof LineShapeImpl) {
+            return shape.getKonvaShape();
+        }
+
+        if (shape instanceof TextImpl) {
             return shape.getKonvaShape();
         }
 

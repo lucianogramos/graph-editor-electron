@@ -19,6 +19,10 @@ export class GraphManager {
     
     private activeTool: string = 'vertex'; 
 
+    private nextVertexNumber: number = 1;
+
+    private vertexObservers: Map<number, (type: string, eventData: any) => void> = new Map();
+
     constructor(private toolManager: ToolManager, private layer: Layer) {
         this.toolManager.onToolChange((tool) => {
             this.setTool(tool);
@@ -37,15 +41,25 @@ export class GraphManager {
             }
         }
 
-        const newVertex = new Vertex(x, y, backendId, this.layer);
+        if (this.vertices.length === 0) {
+            this.nextVertexNumber = 1;
+        }
+
+        const label = this.nextVertexNumber.toString();
+        this.nextVertexNumber++;
+
+        const newVertex = new Vertex(x, y, backendId, this.layer, label);
         
         newVertex.setDraggable(this.activeTool === 'select');
-        newVertex.addObserver((type, eventData) => this.processEvent(type, eventData));
+        
+        const observerCallback = (type: string, eventData: any) => this.processEvent(type, eventData);
+        this.vertexObservers.set(newVertex.getId(), observerCallback);
+        newVertex.addObserver(observerCallback);
 
         this.vertices.push(newVertex);
         this.layer.batchDraw();
         
-        console.log(`Vertex created with ID ${newVertex.getId()} at (${x}, ${y}). Total vertices: ${this.vertices.length}`);
+        console.log(`Vertex created with ID ${newVertex.getId()} and label "${label}" at (${x}, ${y}). Total vertices: ${this.vertices.length}`);
         
         return newVertex;
     }
@@ -53,6 +67,10 @@ export class GraphManager {
     public processEvent(type: string, eventData: any): void {
         if (type === 'CLICK') {
             this.handleVertexClick(eventData.vertex);
+        } else if (type === 'DBLCLICK') {
+            if (this.activeTool === 'select') {
+                eventData.vertex.openInlineEdit();
+            }
         } else if (type === 'MOVE') {
             this.updateConnectedEdges(eventData.vertex);
         }
@@ -120,14 +138,27 @@ export class GraphManager {
 
     public async addEdge(source: Vertex, target: Vertex): Promise<Edge | null> {
         const weight = this.edgeWeighted ? this.edgeWeightValue : 1; 
+        let backendEdgeId = Date.now();
         
         if ((window as any).api?.addEdge) {
             try {
-                await (window as any).api.addEdge();
+                const res = await (window as any).api.addEdge();
+                if (res) {
+                    backendEdgeId = res;
+                }
             } catch (error) {
                 console.error("Erro ao registar aresta no backend:", error);
             }
         }
+
+        const minV = Math.min(source.getId(), target.getId());
+        const maxV = Math.max(source.getId(), target.getId());
+        const existingPairEdges = this.edges.filter(
+            e => (e.getSourceId() === minV && e.getTargetId() === maxV) ||
+                 (e.getSourceId() === maxV && e.getTargetId() === minV)
+        );
+        const initialParallelIndex = existingPairEdges.length;
+        const initialForceInvert = source.getId() > target.getId();
 
         const newEdge = new Edge(
             source.getId(),
@@ -139,9 +170,10 @@ export class GraphManager {
             this.edgeWeighted,
             this.edgeDirected,
             weight,
-            0,
-            false,
-            this.layer
+            initialParallelIndex,
+            initialForceInvert,
+            this.layer,
+            backendEdgeId
         );
 
         newEdge.onClick(() => {
@@ -157,16 +189,25 @@ export class GraphManager {
         return newEdge;
     }
 
-    public removeEdge(edge: Edge): void {
+    public async removeEdge(edge: Edge): Promise<void> {
+        const edgeId = edge.getId();
         const sourceId = edge.getSourceId();
         const targetId = edge.getTargetId();
+
+        if ((window as any).api?.removeEdge) {
+            try {
+                await (window as any).api.removeEdge(edgeId);
+            } catch (error) {
+                console.error("Erro ao remover aresta no backend:", error);
+            }
+        }
 
         edge.destroy();
         this.edges = this.edges.filter(e => e !== edge);
 
         this.reindexParallelEdges(sourceId, targetId);
         this.layer.batchDraw();
-        console.log(`Edge between ${sourceId} and ${targetId} deleted.`);
+        console.log(`Edge (ID: ${edgeId}) between ${sourceId} and ${targetId} deleted.`);
     }
 
     public async removeVertex(vertex: Vertex): Promise<void> {
@@ -174,21 +215,25 @@ export class GraphManager {
 
         if ((window as any).api?.removeVertex) {
             try {
-                await (window as any).api.removeVertex();
+                await (window as any).api.removeVertex(vertexId);
             } catch (error) {
                 console.error("Erro ao remover vértice no backend:", error);
             }
         }
 
+        const callback = this.vertexObservers.get(vertexId);
+        if (callback) {
+            vertex.removeObserver(callback);
+            this.vertexObservers.delete(vertexId);
+        }
+
         const connectedEdges = this.edges.filter(edge => edge.isConnectedTo(vertexId));
         
         const affectedPairs = new Set<string>();
-        connectedEdges.forEach(edge => {
+        for (const edge of connectedEdges) {
             affectedPairs.add(`${Math.min(edge.getSourceId(), edge.getTargetId())}-${Math.max(edge.getSourceId(), edge.getTargetId())}`);
-            edge.destroy();
-        });
-
-        this.edges = this.edges.filter(edge => !edge.isConnectedTo(vertexId));
+            await this.removeEdge(edge);
+        }
 
         affectedPairs.forEach(pairKey => {
             const [v1, v2] = pairKey.split('-').map(Number);
@@ -224,8 +269,10 @@ export class GraphManager {
     }
 
     private updateConnectedEdges(vertex: Vertex): void {
+        const vertexId = vertex.getId();
+        
         for (const edge of this.edges) {
-            if (edge.isConnectedTo(vertex.getId())) {
+            if (edge.isConnectedTo(vertexId)) {
                 const source = this.vertices.find(v => v.getId() === edge.getSourceId());
                 const target = this.vertices.find(v => v.getId() === edge.getTargetId());
 
@@ -234,6 +281,7 @@ export class GraphManager {
                 }
             }
         }
+        
         this.layer.batchDraw();
     }
 

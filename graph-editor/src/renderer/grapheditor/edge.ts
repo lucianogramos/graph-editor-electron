@@ -22,7 +22,8 @@ export class Edge {
         private weight: number,
         private parallelIndex: number = 0,
         private forceInvertCurve: boolean = false,
-        private layer: Layer
+        private layer: Layer,
+        private id: number = Date.now()
     ) {
         const points = this.calculatePoints(this.x1, this.y1, this.x2, this.y2);
         
@@ -51,15 +52,19 @@ export class Edge {
         if (this.directed) {
             const arrowPoints = this.calculateArrowPoints(linePoints);
             this.arrowHead = Graphics.createLine(arrowPoints, "black", 2, 0, false, true);
-            (this.arrowHead as any).fill?.("black"); 
+            if (typeof (this.arrowHead as any).fill === 'function') {
+                this.arrowHead.fill("black");
+            }
             this.layer.addShape(this.arrowHead);
         }
 
         if (this.weighted) {
             this.weightText = Graphics.createText(midPoint.x + 5, midPoint.y - 15, this.weight.toString(), 12);
             if (this.weightText) {
-                (this.weightText as any).fill?.('#ffffff');
-                this.layer.addShape(this.weightText as any);
+                if (typeof this.weightText.fill === 'function') {
+                    this.weightText.fill('#ffffff');
+                }
+                this.layer.addShape(this.weightText);
             }
         }
 
@@ -74,6 +79,10 @@ export class Edge {
         }
     }
 
+    public getId(): number {
+        return this.id;
+    }
+
     public onClick(callback: () => void): void {
         this.clickCallback = callback;
     }
@@ -81,12 +90,12 @@ export class Edge {
     public setParallelIndex(index: number, forceInvert: boolean): void {
         this.parallelIndex = index;
         this.forceInvertCurve = forceInvert;
+        this.updatePosition(this.x1, this.y1, this.x2, this.y2);
     }
 
     private calculatePoints(x1: number, y1: number, x2: number, y2: number): { x: number; y: number }[] {
         const dx = x2 - x1;
         const dy = y2 - y1;
-        const distance = Math.sqrt(dx + dx + dy * dy) || 1;
         const realDist = Math.sqrt(dx * dx + dy * dy);
 
         if (realDist === 0) {
@@ -213,9 +222,9 @@ export class Edge {
             }
         }
         if (this.weightText) {
-            this.layer.removeShape(this.weightText as any);
+            this.layer.removeShape(this.weightText);
             if (typeof (this.weightText as any).destroy === 'function') {
-                (this.weightText as any).destroy();
+                this.weightText.destroy();
             }
         }
         if (typeof (this.lineShape as any).destroy === 'function') {

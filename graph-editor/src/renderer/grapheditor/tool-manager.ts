@@ -45,16 +45,29 @@ export class ToolManager {
         });
 
         window.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (['INPUT', 'TEXTAREA'].includes((document.activeElement as HTMLElement)?.tagName)) {
+            const activeElem = document.activeElement as HTMLElement;
+            if (activeElem && ['INPUT', 'TEXTAREA'].includes(activeElem.tagName)) {
                 return;
             }
 
             const key = e.key.toLowerCase();
             switch (key) {
-                case 's': this.setTool('select'); break;
-                case 'v': this.setTool('vertex'); break;
-                case 'e': this.setTool('edge'); break;
-                case 'r': this.setTool('eraser'); break;
+                case 's': 
+                    this.setTool('select'); 
+                    console.log('Atalho [S]: select');
+                    break;
+                case 'v': 
+                    this.setTool('vertex'); 
+                    console.log('Atalho [V]: vertex');
+                    break;
+                case 'e': 
+                    this.setTool('edge'); 
+                    console.log('Atalho [E]: edge');
+                    break;
+                case 'r': 
+                    this.setTool('eraser'); 
+                    console.log('Atalho [R]: eraser');
+                    break;
             }
         });
     }

@@ -14,26 +14,32 @@ export class Vertex {
     private textShape: Text;
 
     private onChangeThemeId: number = -1;
+    private activeInput: HTMLInputElement | null = null;
 
     constructor(
         private x: number,
         private y: number,
         private id: number,
-        private layer: Layer
+        private layer: Layer,
+        customLabel?: string
     ) {
-        this.label = id.toString();
+        this.label = customLabel !== undefined ? customLabel : id.toString();
 
         this.circleShape = Graphics.createCircle(x, y, 25);
         this.textShape = Graphics.createText(x - 15, y - 7, this.label, 14);
 
         this.configureStyle(Theme.getCurrentThemeColors());
 
-        const nativeText = (this.textShape as any).getNativeShape ? (this.textShape as any).getNativeShape() : (this.textShape as any);
-        if (nativeText && typeof nativeText.listening === 'function') {
-            nativeText.listening(false);
+        const konvaText = typeof (this.textShape as any).getKonvaShape === 'function' 
+            ? (this.textShape as any).getKonvaShape() 
+            : (this.textShape as any);
+
+        if (konvaText && typeof konvaText.listening === 'function') {
+            konvaText.listening(false);
         }
 
         this.layer.addShape(this.circleShape);
+        this.layer.addShape(this.textShape);
 
         let lastClickTime = 0;
         (this.circleShape as any).on('click', () => {
@@ -43,12 +49,21 @@ export class Vertex {
             this.dispatchEvent('CLICK', { vertex: this });
         });
 
+        (this.circleShape as any).on('dblclick', () => {
+            this.dispatchEvent('DBLCLICK', { vertex: this });
+        });
+
         (this.circleShape as any).on('dragmove', () => {
-            const pos = (this.circleShape as any).getPosition ? (this.circleShape as any).getPosition() : { x: (this.circleShape as any).getX(), y: (this.circleShape as any).getY() };
+            const pos = this.circleShape.position;
             if (pos) {
                 this.x = pos.x;
                 this.y = pos.y;
                 this.textShape.setPosition({ x: this.x - 15, y: this.y - 7 });
+                
+                if (this.activeInput) {
+                    this.updateInputPosition(this.activeInput);
+                }
+
                 this.dispatchEvent('MOVE', { vertex: this, x: this.x, y: this.y });
             }
         });
@@ -73,6 +88,10 @@ export class Vertex {
         this.circleShape.setPosition({ x, y });
         this.textShape.setPosition({ x: x - 15, y: y - 7 });
 
+        if (this.activeInput) {
+            this.updateInputPosition(this.activeInput);
+        }
+
         this.dispatchEvent('MOVE', { vertex: this, x: this.x, y: this.y });
     }
 
@@ -83,6 +102,7 @@ export class Vertex {
     public setLabel(label: string): void {
         this.label = label;
         this.textShape.setText(label);
+        this.layer.batchDraw();
     }
 
     public setDraggable(draggable: boolean): void {
@@ -92,6 +112,77 @@ export class Vertex {
 
     public getDraggable(): boolean {
         return this.isDraggable;
+    }
+
+    public openInlineEdit(): void {
+        if (this.activeInput) return;
+
+        const konvaLayer = (this.layer as any).getKonvaLayer ? (this.layer as any).getKonvaLayer() : null;
+        const stage = konvaLayer ? konvaLayer.getStage() : null;
+        const container = stage ? stage.container() : document.body;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = this.label;
+        
+        input.style.position = 'absolute';
+        input.style.zIndex = '1000';
+        input.style.width = '50px';
+        input.style.height = '24px';
+        input.style.textAlign = 'center';
+        input.style.fontSize = '14px';
+        input.style.fontWeight = 'bold';
+        input.style.borderRadius = '4px';
+        input.style.border = '2px solid #3b82f6';
+        input.style.outline = 'none';
+        input.style.backgroundColor = '#ffffff';
+        input.style.color = '#000000';
+
+        this.activeInput = input;
+        this.updateInputPosition(input);
+
+        container.appendChild(input);
+        input.focus();
+        input.select();
+
+        const closeInput = (save: boolean) => {
+            if (save && input.value.trim() !== '') {
+                this.setLabel(input.value.trim());
+            }
+            if (input.parentNode) {
+                input.parentNode.removeChild(input);
+            }
+            this.activeInput = null;
+        };
+
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                closeInput(true);
+            } else if (e.key === 'Escape') {
+                closeInput(false);
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            closeInput(true);
+        });
+    }
+
+    private updateInputPosition(input: HTMLInputElement): void {
+        const konvaLayer = (this.layer as any).getKonvaLayer ? (this.layer as any).getKonvaLayer() : null;
+        const stage = konvaLayer ? konvaLayer.getStage() : null;
+        
+        let clientX = this.x;
+        let clientY = this.y;
+
+        if (stage) {
+            const transform = stage.getAbsoluteTransform();
+            const pos = transform.point({ x: this.x, y: this.y });
+            clientX = pos.x;
+            clientY = pos.y;
+        }
+
+        input.style.left = `${clientX - 25}px`; input.style.top = `${clientY - 12}px`;
     }
 
     public addObserver(callback: (type: string, eventData: any) => void): void {
@@ -109,9 +200,17 @@ export class Vertex {
     }
 
     public destroy(): void {
+        if (this.activeInput && this.activeInput.parentNode) {
+            this.activeInput.parentNode.removeChild(this.activeInput);
+            this.activeInput = null;
+        }
+
         this.layer.removeShape(this.circleShape);
         this.circleShape.destroy();
+        
+        this.layer.removeShape(this.textShape);
         this.textShape.destroy();
+
         Theme.removeCallback(this.onChangeThemeId);
     }
 
@@ -125,7 +224,6 @@ export class Vertex {
 
         this.onChangeThemeId = Theme.onChangeTheme((theme) => {
             const colors = theme.colors;
-            console.log(colors.vertexColor, colors.vertexBorderColor, colors.vertexLabelColor);
             this.circleShape.fill(colors.vertexColor);
             this.circleShape.border(1, colors.vertexBorderColor);
             this.textShape.fill(colors.vertexLabelColor);

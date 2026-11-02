@@ -32,15 +32,88 @@ const graphManager = new GraphManager(toolManager, graphicsLayer);
 
 toolManager.init();
 
+let isSpacePressed = false;
+let isPanning = false;
+let startPanPos = { x: 0, y: 0 };
+let stageStartPos = { x: 0, y: 0 };
+
+function getKonvaStage(): any {
+    return (canvas as any).getStage?.() || 
+           (canvas as any).stage || 
+           (editorElem as any).__konvaStage || 
+           (window as any).Konva?.stages?.[0];
+}
+
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+    const activeElem = document.activeElement as HTMLElement;
+    if (activeElem && ['INPUT', 'TEXTAREA'].includes(activeElem.tagName)) return;
+
+    if (e.code === 'Space' && !isSpacePressed) {
+        isSpacePressed = true;
+        if (editorElem) editorElem.style.cursor = 'grab';
+    }
+});
+
+window.addEventListener('keyup', (e: KeyboardEvent) => {
+    if (e.code === 'Space') {
+        isSpacePressed = false;
+        if (!isPanning && editorElem) {
+            editorElem.style.cursor = 'default';
+        }
+    }
+});
+
+editorElem.addEventListener('mousedown', (e: MouseEvent) => {
+    if (e.button === 1 || isSpacePressed) {
+        const stage = getKonvaStage();
+        if (!stage) return;
+
+        isPanning = true;
+        startPanPos = { x: e.clientX, y: e.clientY };
+        stageStartPos = { x: stage.x(), y: stage.y() };
+        
+        if (editorElem) editorElem.style.cursor = 'grabbing';
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}, true);
+
+window.addEventListener('mousemove', (e: MouseEvent) => {
+    if (!isPanning) return;
+
+    const stage = getKonvaStage();
+    if (!stage) return;
+
+    const dx = e.clientX - startPanPos.x;
+    const dy = e.clientY - startPanPos.y;
+
+    stage.position({
+        x: stageStartPos.x + dx,
+        y: stageStartPos.y + dy
+    });
+
+    stage.batchDraw();
+}, true);
+
+window.addEventListener('mouseup', () => {
+    if (isPanning) {
+        isPanning = false;
+        if (editorElem) {
+            editorElem.style.cursor = isSpacePressed ? 'grab' : 'default';
+        }
+    }
+});
+
+editorElem.addEventListener('auxclick', (e: MouseEvent) => {
+    if (e.button === 1) e.preventDefault();
+});
+
 function getLogicalCoordinates(domEvent: MouseEvent): { x: number; y: number } {
     const rect = editorElem.getBoundingClientRect();
     const screenX = domEvent.clientX - rect.left;
     const screenY = domEvent.clientY - rect.top;
 
-    const stage = 
-        (canvas as any).getStage?.() || 
-        (editorElem as any).__konvaStage || 
-        (window as any).Konva?.stages?.[0];
+    const stage = getKonvaStage();
 
     if (stage) {
         const scale = stage.scaleX() || 1;
@@ -57,6 +130,8 @@ function getLogicalCoordinates(domEvent: MouseEvent): { x: number; y: number } {
 }
 
 canvas.on('click', async (event: any) => {
+    if (isPanning) return;
+
     if (toolManager.getActiveTool() === 'vertex') {
         const domEvent = event.domEvent || event.evt || event;
         
@@ -70,16 +145,18 @@ canvas.on('click', async (event: any) => {
 });
 
 editorElem.addEventListener('mousemove', (domEvent: MouseEvent) => {
-    const coords = getLogicalCoordinates(domEvent);
-    if (coords.x !== 0 || coords.y !== 0) {
-        graphManager.updateSemiEdgePointer(coords.x, coords.y);
+    if (toolManager.getActiveTool() === 'edge' && !isPanning) {
+        const coords = getLogicalCoordinates(domEvent);
+        if (coords.x !== 0 || coords.y !== 0) {
+            graphManager.updateSemiEdgePointer(coords.x, coords.y);
+        }
     }
 });
 
-const btnSelect = document.getElementById('btn-select-tool') as HTMLButtonElement;        
-const btnAddVertex = document.getElementById('btn-vertex-tool') as HTMLButtonElement;    
-const btnAddEdge = document.getElementById('btn-edge-tool') as HTMLButtonElement;
-const btnEraser = document.getElementById('btn-erase-tool') as HTMLButtonElement;
+const btnSelect = (document.getElementById('btn-select-tool') || document.getElementById('btn-select')) as HTMLButtonElement;        
+const btnAddVertex = (document.getElementById('btn-vertex-tool') || document.getElementById('btn-vertex')) as HTMLButtonElement;    
+const btnAddEdge = (document.getElementById('btn-edge-tool') || document.getElementById('btn-edge')) as HTMLButtonElement;
+const btnEraser = (document.getElementById('btn-erase-tool') || document.getElementById('btn-eraser')) as HTMLButtonElement;
 
 let currentToolButton: HTMLButtonElement | null = btnAddVertex;
 
@@ -102,14 +179,7 @@ if (btnAddEdge) {
             toolManager.setTool('edge');
             updateEdgeParameters();
         } else {
-            btnAddEdge.setAttribute('data-selected', 'false');
-            currentToolButton = null;
-            toolManager.setTool('select' as any);
-            graphManager.disableEdgeCreation();
-            if (weightInputContainer) {
-                weightInputContainer.classList.remove('flex');
-                weightInputContainer.classList.add('hidden');
-            }
+            toolManager.setTool('select');
         }
     }, true);
 }
@@ -198,7 +268,6 @@ function updateEdgeParameters() {
 
 toolManager.onToolChange((tool: ToolType) => {
     graphManager.setTool(tool);
-    canvas.setDraggable(tool !== 'eraser');
 
     if (tool === 'select') setActiveToolButton(btnSelect);
     else if (tool === 'vertex') setActiveToolButton(btnAddVertex);
