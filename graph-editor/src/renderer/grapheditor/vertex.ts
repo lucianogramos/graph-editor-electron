@@ -30,30 +30,22 @@ export class Vertex {
 
         this.configureStyle(Theme.getCurrentThemeColors());
 
-        const konvaText = typeof (this.textShape as any).getKonvaShape === 'function' 
-            ? (this.textShape as any).getKonvaShape() 
-            : (this.textShape as any);
-
-        if (konvaText && typeof konvaText.listening === 'function') {
-            konvaText.listening(false);
-        }
-
         this.layer.addShape(this.circleShape);
         this.layer.addShape(this.textShape);
 
         let lastClickTime = 0;
-        (this.circleShape as any).on('click', () => {
+        this.circleShape.on('click', () => {
             const now = Date.now();
             if (now - lastClickTime < 150) return;
             lastClickTime = now;
             this.dispatchEvent('CLICK', { vertex: this });
         });
 
-        (this.circleShape as any).on('dblclick', () => {
+        this.circleShape.on('dblclick', () => {
             this.dispatchEvent('DBLCLICK', { vertex: this });
         });
 
-        (this.circleShape as any).on('dragmove', () => {
+        this.circleShape.on('dragmove', () => {
             const pos = this.circleShape.position;
             if (pos) {
                 this.x = pos.x;
@@ -117,9 +109,7 @@ export class Vertex {
     public openInlineEdit(): void {
         if (this.activeInput) return;
 
-        const konvaLayer = (this.layer as any).getKonvaLayer ? (this.layer as any).getKonvaLayer() : null;
-        const stage = konvaLayer ? konvaLayer.getStage() : null;
-        const container = stage ? stage.container() : document.body;
+        const container = document.getElementById('editor') || document.body;
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -169,20 +159,8 @@ export class Vertex {
     }
 
     private updateInputPosition(input: HTMLInputElement): void {
-        const konvaLayer = (this.layer as any).getKonvaLayer ? (this.layer as any).getKonvaLayer() : null;
-        const stage = konvaLayer ? konvaLayer.getStage() : null;
-        
-        let clientX = this.x;
-        let clientY = this.y;
-
-        if (stage) {
-            const transform = stage.getAbsoluteTransform();
-            const pos = transform.point({ x: this.x, y: this.y });
-            clientX = pos.x;
-            clientY = pos.y;
-        }
-
-        input.style.left = `${clientX - 25}px`; input.style.top = `${clientY - 12}px`;
+        input.style.left = `${this.x - 25}px`;
+        input.style.top = `${this.y - 12}px`;
     }
 
     public addObserver(callback: (type: string, eventData: any) => void): void {

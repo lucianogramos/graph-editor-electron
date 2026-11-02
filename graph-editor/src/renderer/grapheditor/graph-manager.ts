@@ -3,9 +3,14 @@ import { Edge } from './edge';
 import { SemiEdge } from './semi-edge'; 
 import { ToolManager } from './tool-manager';
 import * as Graphics from '../graphics/graphics-gateway';
+import { Canvas } from '../graphics/interface/canvas.interface';
 import { Layer } from '../graphics/interface/layer.interface';
+import { LayerImpl } from '../graphics/implementation/layer-impl';
 
 export class GraphManager {
+    private canvas: Canvas;
+    private layer: Layer;
+    
     private vertices: Vertex[] = [];
     private edges: Edge[] = [];
     
@@ -23,7 +28,17 @@ export class GraphManager {
 
     private vertexObservers: Map<number, (type: string, eventData: any) => void> = new Map();
 
-    constructor(private toolManager: ToolManager, private layer: Layer) {
+    constructor(
+        containerId: string, 
+        width: number, 
+        height: number, 
+        private toolManager: ToolManager
+    ) {
+        this.canvas = Graphics.createCanvas(containerId, width, height);
+        this.layer = new LayerImpl();
+        this.canvas.addLayer(this.layer);
+        this.layer.draw();
+
         this.toolManager.onToolChange((tool) => {
             this.setTool(tool);
         });
@@ -31,14 +46,20 @@ export class GraphManager {
         this.activeTool = this.toolManager.getActiveTool();
     }
 
+    public getCanvas(): Canvas {
+        return this.canvas;
+    }
+
+    public getLayer(): Layer {
+        return this.layer;
+    }
+
     public async addVertex(x: number, y: number): Promise<Vertex> {
         let backendId = Date.now();
-        if ((window as any).api?.addVertex) {
-            try {
-                backendId = await (window as any).api.addVertex();
-            } catch (error) {
-                console.error("Erro ao obter ID do vértice no backend:", error);
-            }
+        try {
+            backendId = await window.api.addVertex();
+        } catch (error) {
+            console.error("Erro ao obter ID do vértice no backend:", error);
         }
 
         if (this.vertices.length === 0) {
@@ -140,15 +161,13 @@ export class GraphManager {
         const weight = this.edgeWeighted ? this.edgeWeightValue : 1; 
         let backendEdgeId = Date.now();
         
-        if ((window as any).api?.addEdge) {
-            try {
-                const res = await (window as any).api.addEdge();
-                if (res) {
-                    backendEdgeId = res;
-                }
-            } catch (error) {
-                console.error("Erro ao registar aresta no backend:", error);
+        try {
+            const res = await window.api.addEdge(source.getId(), target.getId(), weight, this.edgeDirected);
+            if (res) {
+                backendEdgeId = res;
             }
+        } catch (error) {
+            console.error("Erro ao registar aresta no backend:", error);
         }
 
         const minV = Math.min(source.getId(), target.getId());
@@ -194,12 +213,10 @@ export class GraphManager {
         const sourceId = edge.getSourceId();
         const targetId = edge.getTargetId();
 
-        if ((window as any).api?.removeEdge) {
-            try {
-                await (window as any).api.removeEdge(edgeId);
-            } catch (error) {
-                console.error("Erro ao remover aresta no backend:", error);
-            }
+        try {
+            await window.api.removeEdge(edgeId);
+        } catch (error) {
+            console.error("Erro ao remover aresta no backend:", error);
         }
 
         edge.destroy();
@@ -213,12 +230,10 @@ export class GraphManager {
     public async removeVertex(vertex: Vertex): Promise<void> {
         const vertexId = vertex.getId();
 
-        if ((window as any).api?.removeVertex) {
-            try {
-                await (window as any).api.removeVertex(vertexId);
-            } catch (error) {
-                console.error("Erro ao remover vértice no backend:", error);
-            }
+        try {
+            await window.api.removeVertex(vertexId);
+        } catch (error) {
+            console.error("Erro ao remover vértice no backend:", error);
         }
 
         const callback = this.vertexObservers.get(vertexId);

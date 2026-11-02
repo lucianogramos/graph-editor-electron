@@ -1,10 +1,11 @@
 import { Vector2 } from '../graphics/vector2';
 import { Layer } from '../graphics/interface/layer.interface';
+import { LineShape } from '../graphics/interface/line-shape.interface';
 
 export class SemiEdge {
     private controlPoints: Vector2[] = [];
     private currentEndPoint: { x: number; y: number } = { x: 0, y: 0 };
-    private lineShape: any;
+    private lineShape: LineShape;
 
     constructor(
         private startX: number,
@@ -19,22 +20,7 @@ export class SemiEdge {
         ];
 
         this.lineShape = this.graphicsGateway.createLine(initialPoints);
-
-        if (typeof this.lineShape.setTension === 'function') {
-            this.lineShape.setTension(0.3);
-        }
-
-        if (typeof this.lineShape.getKonvaShape === 'function') {
-            const konvaLine = this.lineShape.getKonvaShape();
-            if (konvaLine) {
-                if (typeof konvaLine.dash === 'function') {
-                    konvaLine.dash([6, 6]);
-                }
-                if (typeof konvaLine.listening === 'function') {
-                    konvaLine.listening(false);
-                }
-            }
-        }
+        this.lineShape.setTension(0.3);
 
         this.layer.addShape(this.lineShape);
         this.layer.batchDraw();
@@ -67,18 +53,12 @@ export class SemiEdge {
         }
         pts.push(new Vector2(x, y));
 
-        if (typeof this.lineShape.setPoints === 'function') {
-            this.lineShape.setPoints(pts);
-            this.layer.batchDraw();
-        }
+        this.lineShape.setPoints(pts);
+        this.layer.batchDraw();
     }
 
     public destroy(): void {
         this.layer.removeShape(this.lineShape);
-        if (typeof this.lineShape.destroy === 'function') {
-            this.lineShape.destroy();
-        } else if (typeof this.graphicsGateway.removeLine === 'function') {
-            this.graphicsGateway.removeLine(this.lineShape);
-        }
+        this.lineShape.destroy();
     }
 }

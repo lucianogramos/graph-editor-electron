@@ -1,8 +1,6 @@
 import { titleBarInit } from "./title-bar";
 import { GraphManager } from "./grapheditor/graph-manager";
-import { LayerImpl } from "./graphics/implementation/layer-impl";
 import { ToolManager, ToolType } from "./grapheditor/tool-manager";
-import * as Graphics from "./graphics/graphics-gateway";
 import { updateTheme } from "./theme";
 
 await updateTheme();
@@ -12,37 +10,22 @@ const editorElem = document.getElementById("editor") as HTMLDivElement;
 const weightValueInput = document.getElementById('edge-weight-input') as HTMLInputElement;
 const weightInputContainer = document.getElementById('edge-weight-container') as HTMLElement;
 
-const canvas = Graphics.createCanvas("editor", editorElem.clientWidth, editorElem.clientHeight);
+const toolManager = new ToolManager();
+const graphManager = new GraphManager("editor", editorElem.clientWidth, editorElem.clientHeight, toolManager);
+const canvas = graphManager.getCanvas();
 
 let timeoutId: number | undefined = undefined;
 
 window.addEventListener('resize', () => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
+    timeoutId = window.setTimeout(() => {
         canvas.setSize(editorElem.clientWidth, editorElem.clientHeight);
     }, 250);
 });
 
-const graphicsLayer = new LayerImpl();
-canvas.addLayer(graphicsLayer);
-graphicsLayer.draw();
-
-const toolManager = new ToolManager();
-const graphManager = new GraphManager(toolManager, graphicsLayer);
-
 toolManager.init();
 
 let isSpacePressed = false;
-let isPanning = false;
-let startPanPos = { x: 0, y: 0 };
-let stageStartPos = { x: 0, y: 0 };
-
-function getKonvaStage(): any {
-    return (canvas as any).getStage?.() || 
-           (canvas as any).stage || 
-           (editorElem as any).__konvaStage || 
-           (window as any).Konva?.stages?.[0];
-}
 
 window.addEventListener('keydown', (e: KeyboardEvent) => {
     const activeElem = document.activeElement as HTMLElement;
@@ -50,57 +33,14 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 
     if (e.code === 'Space' && !isSpacePressed) {
         isSpacePressed = true;
-        if (editorElem) editorElem.style.cursor = 'grab';
+        editorElem.style.cursor = 'grab';
     }
 });
 
 window.addEventListener('keyup', (e: KeyboardEvent) => {
     if (e.code === 'Space') {
         isSpacePressed = false;
-        if (!isPanning && editorElem) {
-            editorElem.style.cursor = 'default';
-        }
-    }
-});
-
-editorElem.addEventListener('mousedown', (e: MouseEvent) => {
-    if (e.button === 1 || isSpacePressed) {
-        const stage = getKonvaStage();
-        if (!stage) return;
-
-        isPanning = true;
-        startPanPos = { x: e.clientX, y: e.clientY };
-        stageStartPos = { x: stage.x(), y: stage.y() };
-        
-        if (editorElem) editorElem.style.cursor = 'grabbing';
-        e.preventDefault();
-        e.stopPropagation();
-    }
-}, true);
-
-window.addEventListener('mousemove', (e: MouseEvent) => {
-    if (!isPanning) return;
-
-    const stage = getKonvaStage();
-    if (!stage) return;
-
-    const dx = e.clientX - startPanPos.x;
-    const dy = e.clientY - startPanPos.y;
-
-    stage.position({
-        x: stageStartPos.x + dx,
-        y: stageStartPos.y + dy
-    });
-
-    stage.batchDraw();
-}, true);
-
-window.addEventListener('mouseup', () => {
-    if (isPanning) {
-        isPanning = false;
-        if (editorElem) {
-            editorElem.style.cursor = isSpacePressed ? 'grab' : 'default';
-        }
+        editorElem.style.cursor = 'default';
     }
 });
 
@@ -108,48 +48,27 @@ editorElem.addEventListener('auxclick', (e: MouseEvent) => {
     if (e.button === 1) e.preventDefault();
 });
 
-function getLogicalCoordinates(domEvent: MouseEvent): { x: number; y: number } {
-    const rect = editorElem.getBoundingClientRect();
-    const screenX = domEvent.clientX - rect.left;
-    const screenY = domEvent.clientY - rect.top;
-
-    const stage = getKonvaStage();
-
-    if (stage) {
-        const scale = stage.scaleX() || 1;
-        const stageX = stage.x() || 0;
-        const stageY = stage.y() || 0;
-
-        return {
-            x: (screenX - stageX) / scale,
-            y: (screenY - stageY) / scale
-        };
-    }
-
-    return { x: screenX, y: screenY };
-}
-
 canvas.on('click', async (event: any) => {
-    if (isPanning) return;
-
     if (toolManager.getActiveTool() === 'vertex') {
         const domEvent = event.domEvent || event.evt || event;
         
         if (domEvent && domEvent.clientX !== undefined) {
-            const coords = getLogicalCoordinates(domEvent);
-            if (coords.x !== 0 || coords.y !== 0) {
-                await graphManager.addVertex(coords.x, coords.y);
-            }
+            const rect = editorElem.getBoundingClientRect();
+            const x = domEvent.clientX - rect.left;
+            const y = domEvent.clientY - rect.top;
+            
+            await graphManager.addVertex(x, y);
         }
     }
 });
 
 editorElem.addEventListener('mousemove', (domEvent: MouseEvent) => {
-    if (toolManager.getActiveTool() === 'edge' && !isPanning) {
-        const coords = getLogicalCoordinates(domEvent);
-        if (coords.x !== 0 || coords.y !== 0) {
-            graphManager.updateSemiEdgePointer(coords.x, coords.y);
-        }
+    if (toolManager.getActiveTool() === 'edge') {
+        const rect = editorElem.getBoundingClientRect();
+        const x = domEvent.clientX - rect.left;
+        const y = domEvent.clientY - rect.top;
+        
+        graphManager.updateSemiEdgePointer(x, y);
     }
 });
 
@@ -253,13 +172,8 @@ function updateEdgeParameters() {
         const isDirected = edgeDirectedButton?.getAttribute('data-selected') === 'true';
         
         let weight = 1;
-        if (isWeighted) {
-            if (weightValueInput) {
-                weight = parseFloat(weightValueInput.value) || 1;
-            } else {
-                const inputWeight = prompt("Digite o peso da aresta:", "1");
-                weight = inputWeight ? parseFloat(inputWeight) || 1 : 1;
-            }
+        if (isWeighted && weightValueInput) {
+            weight = parseFloat(weightValueInput.value) || 1;
         }
 
         graphManager.enableEdgeCreation(isWeighted, isDirected, weight);

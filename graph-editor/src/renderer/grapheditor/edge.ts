@@ -52,31 +52,25 @@ export class Edge {
         if (this.directed) {
             const arrowPoints = this.calculateArrowPoints(linePoints);
             this.arrowHead = Graphics.createLine(arrowPoints, "black", 2, 0, false, true);
-            if (typeof (this.arrowHead as any).fill === 'function') {
-                this.arrowHead.fill("black");
-            }
+            this.arrowHead.fill("black");
             this.layer.addShape(this.arrowHead);
         }
 
         if (this.weighted) {
             this.weightText = Graphics.createText(midPoint.x + 5, midPoint.y - 15, this.weight.toString(), 12);
             if (this.weightText) {
-                if (typeof this.weightText.fill === 'function') {
-                    this.weightText.fill('#ffffff');
-                }
+                this.weightText.fill('#ffffff');
                 this.layer.addShape(this.weightText);
             }
         }
 
         this.layer.batchDraw();
 
-        if (typeof (this.lineShape as any).onClick === 'function') {
-            (this.lineShape as any).onClick(() => {
-                if (this.clickCallback) {
-                    this.clickCallback();
-                }
-            });
-        }
+        this.lineShape.on('click', () => {
+            if (this.clickCallback) {
+                this.clickCallback();
+            }
+        });
     }
 
     public getId(): number {
@@ -215,20 +209,16 @@ export class Edge {
 
     public destroy(): void {
         this.layer.removeShape(this.lineShape);
+        this.lineShape.destroy();
+
         if (this.arrowHead) {
             this.layer.removeShape(this.arrowHead);
-            if (typeof (this.arrowHead as any).destroy === 'function') {
-                (this.arrowHead as any).destroy();
-            }
+            this.arrowHead.destroy();
         }
+        
         if (this.weightText) {
             this.layer.removeShape(this.weightText);
-            if (typeof (this.weightText as any).destroy === 'function') {
-                this.weightText.destroy();
-            }
-        }
-        if (typeof (this.lineShape as any).destroy === 'function') {
-            (this.lineShape as any).destroy();
+            this.weightText.destroy();
         }
     }
 }
