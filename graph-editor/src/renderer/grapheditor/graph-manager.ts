@@ -5,7 +5,7 @@ import { ToolManager, ToolType } from './tool-manager';
 import * as Graphics from '../graphics/graphics-gateway';
 import { Canvas } from '../graphics/interface/canvas.interface';
 import { Layer } from '../graphics/interface/layer.interface';
-import { LayerImpl } from '../graphics/implementation/layer-impl';
+import { onChangeTheme } from '../theme';
 
 export class GraphManager {
     private canvas: Canvas;
@@ -38,7 +38,7 @@ export class GraphManager {
         this.containerElem = document.getElementById(containerId);
         this.canvas = Graphics.createCanvas(containerId, width, height);
         // this.canvas.setDraggable(true);
-        this.layer = new LayerImpl();
+        this.layer = Graphics.createLayer();
         this.canvas.addLayer(this.layer);
         this.layer.draw();
 
@@ -77,6 +77,16 @@ export class GraphManager {
                 }
             });
         }
+
+        onChangeTheme(() => {
+            for (const v of this.vertices) {
+                v.updateStyle();
+            }
+            for (const e of this.edges) {
+                e.updateStyle();
+            }
+            this.layer.batchDraw();
+        });
     }
 
     public getCanvas(): Canvas {

@@ -99,13 +99,16 @@ export class LineShapeImpl implements LineShape {
         this.line.closed(loop);
     }
 
-    public fill(hex: string): void {
+    public setFill(hex: string): void {
         this.line.fill(hex);
     }
 
-    public border(thickness: number, hex: string): void {
-        this.line.strokeWidth(thickness);
+    public setBorderColor(hex: string): void {
         this.line.stroke(hex);
+    }
+
+    public setBorderWidth(thickness: number): void {
+        this.line.strokeWidth(thickness);
     }
 
     public getKonvaShape(): Konva.Line {

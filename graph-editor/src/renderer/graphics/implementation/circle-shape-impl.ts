@@ -64,13 +64,16 @@ export class CircleShapeImpl implements CircleShape {
         this.circle.radius(radius);
     }
 
-    public fill(hex: string): void {
+    public setFill(hex: string): void {
         this.circle.fill(hex);
     }
 
-    public border(thickness: number, hex: string): void {
-        this.circle.strokeWidth(thickness);
+    public setBorderColor(hex: string): void {
         this.circle.stroke(hex);
+    }
+    
+    public setBorderWidth(thickness: number): void {
+        this.circle.strokeWidth(thickness);
     }
 
     public getKonvaShape(): Konva.Circle {

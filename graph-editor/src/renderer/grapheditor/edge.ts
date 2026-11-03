@@ -3,10 +3,13 @@ import * as Graphics from '../graphics/graphics-gateway';
 import { LineShape } from '../graphics/interface/line-shape.interface';
 import { Text } from '../graphics/interface/text.interface';
 import { Layer } from '../graphics/interface/layer.interface';
+import { getCurrentThemeColors } from '../theme';
+import { CircleShape } from '../graphics/interface/circle-shape.interface';
 
 export class Edge {
     private lineShape: LineShape;
     private arrowHead?: LineShape;
+    private weightTextBg?: CircleShape;
     private weightText?: Text;
     private clickCallback?: () => void;
 
@@ -52,19 +55,20 @@ export class Edge {
         if (this.directed) {
             const arrowPoints = this.calculateArrowPoints(linePoints);
             this.arrowHead = Graphics.createLine(arrowPoints, "black", 2, 0, false, true);
-            this.arrowHead.fill("black");
+            this.arrowHead.setFill("black");
             this.layer.addShape(this.arrowHead);
         }
 
         if (this.weighted) {
             this.weightText = Graphics.createText(midPoint.x + 5, midPoint.y - 15, this.weight.toString(), 12);
-            if (this.weightText) {
-                this.weightText.fill('#ffffff');
-                this.layer.addShape(this.weightText);
-            }
+            this.weightTextBg = Graphics.createCircle(midPoint.x + 5, midPoint.y - 15, 10, 'black', 'black', 0);
+            this.weightText.setTextAlign('center');
+            this.weightText.setTextVerticalAlign('middle')
+            this.layer.addShape(this.weightTextBg);
+            this.layer.addShape(this.weightText);
         }
 
-        this.layer.batchDraw();
+        this.updateStyle();
 
         this.lineShape.on('click', () => {
             if (this.clickCallback) {
@@ -192,7 +196,20 @@ export class Edge {
 
         if (this.weightText) {
             this.weightText.setPosition({ x: midPoint.x + 5, y: midPoint.y - 15 });
+            this.weightTextBg?.setPosition({ x: midPoint.x + 5, y: midPoint.y - 15 })
         }
+    }
+
+    public updateStyle() {
+        const colors = getCurrentThemeColors();
+        this.lineShape.setFill(colors.edgeColor);
+        this.lineShape.setBorderColor(colors.edgeBorderColor)
+        if (this.arrowHead) {
+            this.arrowHead.setFill(colors.edgeColor);
+            this.arrowHead.setBorderColor(colors.edgeBorderColor);
+        }
+        this.weightText?.setFill(colors.edgeWeightColor);
+        this.weightTextBg?.setFill(colors.edgeWeightBgColor);
     }
 
     public isConnectedTo(vertexId: number): boolean {

@@ -8,6 +8,8 @@ export interface ThemeColors {
     edgeColor: string;
     edgeBorderColor: string;
     vertexLabelColor: string;
+    edgeWeightColor: string;
+    edgeWeightBgColor: string;
 }
 
 export interface Api {

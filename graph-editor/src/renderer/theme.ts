@@ -18,7 +18,7 @@ export async function updateTheme() {
 
     for (const [, callback] of callbacks) {
         callback(theme);
-    } 
+    }
 }
 
 export function onChangeTheme(callback: (theme: Theme) => void): number {

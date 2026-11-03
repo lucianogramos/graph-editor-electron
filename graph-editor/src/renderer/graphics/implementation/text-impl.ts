@@ -122,13 +122,16 @@ export class TextImpl implements Text {
         this.konvaText.listening(listening);
     }
 
-    public fill(hex: string): void {
+    public setFill(hex: string): void {
         this.konvaText.fill(hex);
     }
 
-    public border(thickness: number, hex: string): void {
-        this.konvaText.strokeWidth(thickness);
+    public setBorderColor(hex: string): void {
         this.konvaText.stroke(hex);
+    }
+    
+    public setBorderWidth(thickness: number): void {
+        this.konvaText.strokeWidth(thickness);
     }
 
     public destroy(): void {

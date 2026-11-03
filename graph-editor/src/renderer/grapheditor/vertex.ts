@@ -2,8 +2,7 @@ import * as Graphics from '../graphics/graphics-gateway';
 import { CircleShape } from '../graphics/interface/circle-shape.interface';
 import { Text } from '../graphics/interface/text.interface';
 import { Layer } from '../graphics/interface/layer.interface';
-import * as Theme from '../theme';
-import { ThemeColors } from '../../types/ipc';
+import { getCurrentThemeColors } from '../theme';
 
 export interface VertexEventData {
     vertex: Vertex;
@@ -19,9 +18,10 @@ export class Vertex {
     private circleShape: CircleShape;
     private textShape: Text;
 
-    private onChangeThemeId: number = -1;
     private activeInput: HTMLInputElement | null = null;
     private lastClickTime: number = 0;
+
+    private readonly RADIUS = 25;
 
     constructor(
         private x: number,
@@ -32,10 +32,10 @@ export class Vertex {
     ) {
         this.label = customLabel !== undefined ? customLabel : id.toString();
 
-        this.circleShape = Graphics.createCircle(x, y, 25);
+        this.circleShape = Graphics.createCircle(x, y, this.RADIUS);
         this.textShape = Graphics.createText(x - 15, y - 7, this.label, 14);
 
-        this.configureStyle(Theme.getCurrentThemeColors());
+        this.updateStyle();
 
         this.layer.addShape(this.circleShape);
         this.layer.addShape(this.textShape);
@@ -199,22 +199,15 @@ export class Vertex {
         this.layer.removeShape(this.textShape);
         this.textShape.destroy();
 
-        Theme.removeCallback(this.onChangeThemeId);
     }
 
-    private configureStyle(colors: ThemeColors): void {
-        this.circleShape.fill(colors.vertexColor);
-        this.circleShape.border(1, colors.vertexBorderColor);
-        this.textShape.fill(colors.vertexLabelColor);
+    public updateStyle(): void {
+        const colors = getCurrentThemeColors();
+        this.circleShape.setFill(colors.vertexColor);
+        this.circleShape.setBorderColor(colors.vertexBorderColor);
+        this.textShape.setFill(colors.vertexLabelColor);
         this.textShape.setFontStyle('bold');
         this.textShape.setTextAlign('center');
         this.textShape.setWidth(30);
-
-        this.onChangeThemeId = Theme.onChangeTheme((theme) => {
-            const themeColors = theme.colors;
-            this.circleShape.fill(themeColors.vertexColor);
-            this.circleShape.border(1, themeColors.vertexBorderColor);
-            this.textShape.fill(themeColors.vertexLabelColor);
-        });
     }
 }

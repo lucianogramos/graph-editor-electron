@@ -15,12 +15,12 @@ export function createCanvas<T>(container: string, width: number, height: number
     return new CanvasImpl(container, width, height);
 }
 
-export function createCircle(x: number, y: number, radius: number, fill: string = "blue", stroke: string = "black", strokeWidth: number = 2, draggable: boolean = false): CircleShape {
-    return new CircleShapeImpl(x, y, radius, fill, stroke, strokeWidth, draggable);
+export function createCircle(x: number, y: number, radius: number, fill: string = "blue", border: string = "black", borderWidth: number = 2, draggable: boolean = false): CircleShape {
+    return new CircleShapeImpl(x, y, radius, fill, border, borderWidth, draggable);
 }
 
-export function createLine(points: Vector2[], stroke: string = "black", strokeWidth: number = 2, tension: number = 0, draggable: boolean = false, closed: boolean = false): LineShape {
-    return new LineShapeImpl(points, stroke, strokeWidth, tension, draggable, closed);
+export function createLine(points: Vector2[], border: string = "black", borderWidth: number = 2, tension: number = 0, draggable: boolean = false, closed: boolean = false): LineShape {
+    return new LineShapeImpl(points, border, borderWidth, tension, draggable, closed);
 }
 
 export function createLayer(): Layer {
