@@ -1,6 +1,13 @@
 # graph-editor-electron
 Desktop Application For Graph Editing
 
+## How to execute
+With Node.js installed, run the following commands inside the graph-editor directory:
+
+1. To install all dependencies: `npm install`
+
+2. To run the application: `npm start`
+
 ## Frameworks
 This application is being developed using the **[ElectronJS](https://www.electronjs.org/)** framework.
 
