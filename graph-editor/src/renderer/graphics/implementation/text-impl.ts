@@ -4,7 +4,6 @@ import { Vector2 } from "../vector2";
 import { Direction, Text } from "../interface/text.interface"; 
 import { Listener } from "../interface/listener.interface";
 import { EventKeyMap } from "../interface/event-key-map.interface"; 
-import { FastLayer } from "konva/lib/FastLayer";
 
 export class TextImpl implements Text {
     private konvaText: Konva.Text;
