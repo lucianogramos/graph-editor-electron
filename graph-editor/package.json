@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "update-css": "npx @tailwindcss/cli -i src/renderer/index.css -o src/renderer/style.css",
     "build": "tsc -p tsconfig.main.json && node scripts/build.js && npm run update-css && node scripts/copy-files.js config.json",
-    "start": "npm run build && electron ."
+    "start": "npm run build && electron .",
+    "build:exe": "npm run build && electron-builder"
   },
   "keywords": [],
   "author": "",
@@ -15,11 +16,38 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "electron": "^44.9.2",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.28.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "konva": "^10.9.0"
+  },
+  "build": {
+    "appId": "com.lucianogramos.graphdraw",
+    "productName": "Graph Draw",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    }
   }
 }

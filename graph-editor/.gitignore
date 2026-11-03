@@ -9,3 +9,6 @@ dist/
 
 # Files Generated Automatically
 src/renderer/style.css
+
+# Release
+release/
