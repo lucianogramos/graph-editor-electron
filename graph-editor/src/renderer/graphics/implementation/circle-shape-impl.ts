@@ -9,7 +9,7 @@ export class CircleShapeImpl implements CircleShape {
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, radius: number, fill: string = "blue", border: string = "black", borderWidth: number = 2, draggable: boolean = false) {
+    public constructor(x: number, y: number, radius: number, fill: string = "blue", border: string = "black", borderWidth: number = 2, draggable: boolean = false) {
         this.circle = new Konva.Circle({
             x: x,
             y: y,
@@ -21,55 +21,63 @@ export class CircleShapeImpl implements CircleShape {
         })
     }
 
-    get position(): Vector2 {
+    public get position(): Vector2 {
         return new Vector2(this.circle.x(), this.circle.y());
     }
 
-    get draggable(): boolean {
+    public get draggable(): boolean {
         return this.circle.draggable();
     }
 
-    get radius(): number {
+    public get listening(): boolean {
+        return this.circle.listening();
+    }
+
+    public get radius(): number {
         return this.circle.radius();
     }
 
-    setX(x: number): void {
+    public setX(x: number): void {
         this.circle.x(x);
     }
 
-    setY(y: number): void {
+    public setY(y: number): void {
         this.circle.y(y);
     }
 
-    setPosition(position: Vector2): void {
+    public setPosition(position: Vector2): void {
         this.circle.position({
             x: position.x,
             y: position.y
         });
     }
 
-    setDraggable(draggable: boolean): void {
+    public setDraggable(draggable: boolean): void {
         this.circle.draggable(draggable);
     }
 
-    setRadius(radius: number): void {
+    public setListening(listening: boolean): void {
+        this.circle.listening(listening);
+    }
+
+    public setRadius(radius: number): void {
         this.circle.radius(radius);
     }
 
-    fill(hex: string): void {
+    public fill(hex: string): void {
         this.circle.fill(hex);
     }
 
-    border(thickness: number, hex: string): void {
+    public border(thickness: number, hex: string): void {
         this.circle.strokeWidth(thickness);
         this.circle.stroke(hex);
     }
 
-    getKonvaShape(): Konva.Circle {
+    public getKonvaShape(): Konva.Circle {
         return this.circle;
     }
 
-    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+    public on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
         if (!this.callbacks.has(type))
             this.callbacks.set(type, []);
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
@@ -91,13 +99,13 @@ export class CircleShapeImpl implements CircleShape {
         }
     }
 
-    off<K extends keyof EventKeyMap>(type: K): void {
+    public off<K extends keyof EventKeyMap>(type: K): void {
         this.circle.off(type);
         this.callbacks.delete(type);
     }
 
     
-    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks.get(type);
         
         const newEvent: EventKeyMap[K] = {
@@ -115,13 +123,13 @@ export class CircleShapeImpl implements CircleShape {
         this.dispatchEvent(type, event);
     }
     
-    addListener(listener: Listener): void {
+    public addListener(listener: Listener): void {
         if (!this.listeners.includes(listener)) {
             this.listeners.push(listener);
         }
     }
 
-    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
 
         if (event.cancel) {
             return;
@@ -131,7 +139,7 @@ export class CircleShapeImpl implements CircleShape {
         }
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.circle.destroy();
     }
 }

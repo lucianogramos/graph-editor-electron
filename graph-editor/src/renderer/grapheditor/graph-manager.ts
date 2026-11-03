@@ -37,6 +37,7 @@ export class GraphManager {
     ) {
         this.containerElem = document.getElementById(containerId);
         this.canvas = Graphics.createCanvas(containerId, width, height);
+        // this.canvas.setDraggable(true);
         this.layer = new LayerImpl();
         this.canvas.addLayer(this.layer);
         this.layer.draw();

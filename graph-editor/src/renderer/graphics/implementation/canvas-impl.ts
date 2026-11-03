@@ -8,7 +8,7 @@ export class CanvasImpl implements Canvas {
     private stage: Konva.Stage;
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
 
-    constructor(container: string, width: number, height: number) {
+    public constructor(container: string, width: number, height: number) {
         this.stage = new Konva.Stage({
             container: container,
             width: width,
@@ -17,45 +17,45 @@ export class CanvasImpl implements Canvas {
         });
     }
 
-    get width(): number {
+    public get width(): number {
         return this.stage.width();
     }
 
-    get height(): number {
+    public get height(): number {
         return this.stage.height();
     }
 
-    get draggable(): boolean {
+    public get draggable(): boolean {
         return this.stage.draggable();
     }
 
-    setWidth(width: number): void {
+    public setWidth(width: number): void {
         this.stage.width(width);
     }
 
-    setHeight(height: number): void {
+    public setHeight(height: number): void {
         this.stage.height(height);
     }
 
-    setSize(width: number, height: number): void {
+    public setSize(width: number, height: number): void {
         this.stage.size({
             width: width,
             height: height
         });
     }
 
-    setDraggable(draggable: boolean): void {
+    public setDraggable(draggable: boolean): void {
         this.stage.draggable(draggable);
     }
 
-    addLayer(layer: Layer): void {
+    public addLayer(layer: Layer): void {
         if (!(layer instanceof LayerImpl)) {
             throw new Error("A camada deve ser uma LayerImpl.");
         }
         this.stage.add(layer.getKonvaLayer());
     }
 
-    removeLayer(layer: Layer): void {
+    public removeLayer(layer: Layer): void {
         if (!(layer instanceof LayerImpl)) {
             throw new Error("A camada deve ser uma LayerImpl.");
         }
@@ -67,7 +67,7 @@ export class CanvasImpl implements Canvas {
         }
     }
 
-    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+    public on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
         if (!this.callbacks.has(type))
             this.callbacks.set(type, []);
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
@@ -89,13 +89,13 @@ export class CanvasImpl implements Canvas {
         }
     }
         
-    off<K extends keyof EventKeyMap>(type: K): void {
+    public off<K extends keyof EventKeyMap>(type: K): void {
         this.stage.off(type);
         this.callbacks.delete(type);
     }
         
             
-    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks.get(type);
         
         const newEvent = {

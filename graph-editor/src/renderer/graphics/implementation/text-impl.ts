@@ -10,7 +10,7 @@ export class TextImpl implements Text {
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr", listening: boolean = false) {
+    public constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr", listening: boolean = false) {
         this.konvaText = new Konva.Text({
             x: x,
             y: y,
@@ -20,178 +20,186 @@ export class TextImpl implements Text {
             fill: fill,
             draggable: draggable,
             direction: direction,
-            listening: false
+            listening: listening
         });
     }
 
-    get position(): Vector2 {
+    public get position(): Vector2 {
         return new Vector2(
             this.konvaText.x(),
             this.konvaText.y()
         );
     }
 
-    get draggable(): boolean {
+    public get draggable(): boolean {
         return this.konvaText.draggable();
     }
 
-    setX(x: number): void {
+    public get listening(): boolean {
+        return this.konvaText.listening();
+    }
+
+    public get text(): string {
+        return this.konvaText.text();
+    }
+
+    public get textDecoration(): string {
+        return this.konvaText.textDecoration();
+    }
+
+    public get fontFamily(): string {
+        return this.konvaText.fontFamily();
+    }
+
+    public get fontSize(): number {
+        return this.konvaText.fontSize();
+    }
+
+    public get fontStyle(): string {
+        return this.konvaText.fontStyle();
+    }
+
+    public get fontVariant(): string {
+        return this.konvaText.fontVariant();
+    }
+
+    public get textAlign(): string {
+        return this.konvaText.align();
+    }
+
+    public get textVerticalAlign(): string {
+        return this.konvaText.verticalAlign();
+    }
+
+    public get lineHeight(): number {
+        return this.konvaText.lineHeight();
+    }
+
+    public get letterSpacing(): number {
+        return this.konvaText.letterSpacing();
+    }
+
+    public get direction(): Direction {
+        return this.konvaText.direction() as Direction;
+    }
+
+    public get wrap(): string {
+        return this.konvaText.wrap();
+    }
+
+    public get ellipsis(): boolean {
+        return this.konvaText.ellipsis();
+    }
+
+    public get width(): number {
+        return this.konvaText.width();
+    }
+
+    public get height(): number {
+        return this.konvaText.height();
+    }
+
+    public setX(x: number): void {
         this.konvaText.x(x);
     }
 
-    setY(y: number): void {
+    public setY(y: number): void {
         this.konvaText.y(y);
     }
 
-    setPosition(position: Vector2): void {
+    public setPosition(position: Vector2): void {
         this.konvaText.position({
             x: position.x,
             y: position.y
         });
     }
 
-    setDraggable(draggable: boolean): void {
+    public setDraggable(draggable: boolean): void {
         this.konvaText.draggable(draggable);
     }
 
-    fill(hex: string): void {
+    public setListening(listening: boolean): void {
+        this.konvaText.listening(listening);
+    }
+
+    public fill(hex: string): void {
         this.konvaText.fill(hex);
     }
 
-    border(thickness: number, hex: string): void {
+    public border(thickness: number, hex: string): void {
         this.konvaText.strokeWidth(thickness);
         this.konvaText.stroke(hex);
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.konvaText.destroy();
     }
 
-    get text(): string {
-        return this.konvaText.text();
-    }
-
-    get textDecoration(): string {
-        return this.konvaText.textDecoration();
-    }
-
-    get fontFamily(): string {
-        return this.konvaText.fontFamily();
-    }
-
-    get fontSize(): number {
-        return this.konvaText.fontSize();
-    }
-
-    get fontStyle(): string {
-        return this.konvaText.fontStyle();
-    }
-
-    get fontVariant(): string {
-        return this.konvaText.fontVariant();
-    }
-
-    get textAlign(): string {
-        return this.konvaText.align();
-    }
-
-    get textVerticalAlign(): string {
-        return this.konvaText.verticalAlign();
-    }
-
-    get lineHeight(): number {
-        return this.konvaText.lineHeight();
-    }
-
-    get letterSpacing(): number {
-        return this.konvaText.letterSpacing();
-    }
-
-    get direction(): Direction {
-        return this.konvaText.direction() as Direction;
-    }
-
-    get wrap(): string {
-        return this.konvaText.wrap();
-    }
-
-    get ellipsis(): boolean {
-        return this.konvaText.ellipsis();
-    }
-
-    get width(): number {
-        return this.konvaText.width();
-    }
-
-    get height(): number {
-        return this.konvaText.height();
-    }
-
-    setText(text: string): void {
+    public setText(text: string): void {
         this.konvaText.text(text);
     }
 
-    setTextDecoration(decoration: string): void {
+    public setTextDecoration(decoration: string): void {
         this.konvaText.textDecoration(decoration);
     }
 
-    setFontFamily(fontFamily: string): void {
+    public setFontFamily(fontFamily: string): void {
         this.konvaText.fontFamily(fontFamily);
     }
 
-    setFontSize(size: number): void {
+    public setFontSize(size: number): void {
         this.konvaText.fontSize(size);
     }
 
-    setFontStyle(fontStyle: string): void {
+    public setFontStyle(fontStyle: string): void {
         this.konvaText.fontStyle(fontStyle);
     }
 
-    setFontVariant(variant: string): void {
+    public setFontVariant(variant: string): void {
         this.konvaText.fontVariant(variant);
     }
 
-    setTextAlign(textAlign: string): void {
+    public setTextAlign(textAlign: string): void {
         this.konvaText.align(textAlign);
     }
 
-    setTextVerticalAlign(textVerticalAlign: string): void {
+    public setTextVerticalAlign(textVerticalAlign: string): void {
         this.konvaText.verticalAlign(textVerticalAlign);
     }
 
-    setLineHeight(height: number): void {
+    public setLineHeight(height: number): void {
         this.konvaText.lineHeight(height);
     }
 
-    setLetterSpacing(spacing: number): void {
+    public setLetterSpacing(spacing: number): void {
         this.konvaText.letterSpacing(spacing);
     }
 
-    setDirection(direction: Direction): void {
+    public setDirection(direction: Direction): void {
         this.konvaText.direction(direction);
     }
 
-    setWrap(wrap: string): void {
+    public setWrap(wrap: string): void {
         this.konvaText.wrap(wrap);
     }
 
-    setEllipsis(value: boolean): void {
+    public setEllipsis(value: boolean): void {
         this.konvaText.ellipsis(value);
     }
 
-    setWidth(width: number): void {
+    public setWidth(width: number): void {
         this.konvaText.width(width);
     }
 
-    setHeight(height: number): void {
+    public setHeight(height: number): void {
         this.konvaText.height(height);
     }
 
-    getKonvaShape(): Konva.Text {
+    public getKonvaShape(): Konva.Text {
         return this.konvaText;
     }
 
-    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+    public on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
         if (!this.callbacks.has(type))
             this.callbacks.set(type, []);
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
@@ -213,13 +221,13 @@ export class TextImpl implements Text {
         }
     }
 
-    off<K extends keyof EventKeyMap>(type: K): void {
+    public off<K extends keyof EventKeyMap>(type: K): void {
         this.konvaText.off(type);
         this.callbacks.delete(type);
     }
 
     
-    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks.get(type);
         
         const newEvent = {
@@ -237,13 +245,13 @@ export class TextImpl implements Text {
         this.dispatchEvent(type, event);
     }
     
-    addListener(listener: Listener): void {
+    public addListener(listener: Listener): void {
         if (!this.listeners.includes(listener)) {
             this.listeners.push(listener);
         }
     }
 
-    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
 
         if (event.cancel) {
             return;

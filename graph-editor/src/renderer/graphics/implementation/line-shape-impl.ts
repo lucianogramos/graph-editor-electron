@@ -9,7 +9,7 @@ export class LineShapeImpl implements LineShape {
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor(points: Vector2[], border: string = "black", borderWidth: number = 2, tension: number = 0, draggable: boolean = false, closed: boolean = false) {
+    public constructor(points: Vector2[], border: string = "black", borderWidth: number = 2, tension: number = 0, draggable: boolean = false, closed: boolean = false) {
         const coordinates = points.flatMap(
             point => [point.x, point.y]
         );
@@ -24,15 +24,19 @@ export class LineShapeImpl implements LineShape {
         });
     }
 
-    get position(): Vector2 {
+    public get position(): Vector2 {
         return new Vector2(this.line.x(), this.line.y());
     }
 
-    get draggable(): boolean {
+    public get draggable(): boolean {
         return this.line.draggable();
     }
 
-    get points(): Vector2[] {
+    public get listening(): boolean {
+        return this.line.listening();
+    }
+
+    public get points(): Vector2[] {
         const coordinates = this.line.points();
         const result: Vector2[] = [];
 
@@ -43,68 +47,72 @@ export class LineShapeImpl implements LineShape {
         return result;
     }
 
-    get tension(): number {
+    public get tension(): number {
         return this.line.tension();
     }
 
-    get loop(): boolean {
+    public get loop(): boolean {
         return this.line.closed();
     }
 
-    setX(x: number): void {
+    public setX(x: number): void {
         this.line.x(x);
     }
 
-    setY(y: number): void {
+    public setY(y: number): void {
         this.line.y(y);
     }
 
-    setPosition(position: Vector2): void {
+    public setPosition(position: Vector2): void {
         this.line.position({
             x: position.x,
             y: position.y
         });
     }
 
-    setDraggable(draggable: boolean): void {
+    public setDraggable(draggable: boolean): void {
         this.line.draggable(draggable);
     }
 
-    setPoints(points: Vector2[]): void {
+    public setListening(listening: boolean): void {
+        this.line.listening(listening);
+    }
+
+    public setPoints(points: Vector2[]): void {
         const coordinates = points.flatMap(
             point => [point.x, point.y]
         );
         this.line.points(coordinates);
     }
 
-    addPoint(point: Vector2): void {
+    public addPoint(point: Vector2): void {
         const coordinates = this.line.points();
 
         this.line.points([...coordinates, point.x,point.y]);
     }
 
-    setTension(tension: number): void {
+    public setTension(tension: number): void {
         this.line.tension(tension);
     }
 
-    setLoop(loop: boolean): void {
+    public setLoop(loop: boolean): void {
         this.line.closed(loop);
     }
 
-    fill(hex: string): void {
+    public fill(hex: string): void {
         this.line.fill(hex);
     }
 
-    border(thickness: number, hex: string): void {
+    public border(thickness: number, hex: string): void {
         this.line.strokeWidth(thickness);
         this.line.stroke(hex);
     }
 
-    getKonvaShape(): Konva.Line {
+    public getKonvaShape(): Konva.Line {
         return this.line;
     }
 
-    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+    public on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
         if (!this.callbacks.has(type))
             this.callbacks.set(type, []);
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
@@ -126,13 +134,13 @@ export class LineShapeImpl implements LineShape {
         }
     }
     
-    off<K extends keyof EventKeyMap>(type: K): void {
+    public off<K extends keyof EventKeyMap>(type: K): void {
         this.line.off(type);
         this.callbacks.delete(type);
     }
     
         
-    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks.get(type);
         
         const newEvent = {
@@ -150,13 +158,13 @@ export class LineShapeImpl implements LineShape {
         this.dispatchEvent(type, event);
     }
 
-    addListener(listener: Listener): void {
+    public addListener(listener: Listener): void {
         if (!this.listeners.includes(listener)) {
             this.listeners.push(listener);
         }
     }
 
-    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
 
         if (event.cancel) {
             return;
@@ -166,7 +174,7 @@ export class LineShapeImpl implements LineShape {
         }
     }
 
-    destroy(): void {
+    public destroy(): void {
         this.line.destroy();
     }
 }

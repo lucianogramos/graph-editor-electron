@@ -13,11 +13,11 @@ export class LayerImpl implements Layer {
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor() {
+    public constructor() {
         this.layer = new Konva.Layer();
     }
 
-    getKonvaLayer(): Konva.Layer {
+    public getKonvaLayer(): Konva.Layer {
         return this.layer;
     }
 
@@ -37,12 +37,12 @@ export class LayerImpl implements Layer {
         throw new Error("Tipo de Shape não suportado.");
     }
 
-    addShape(shape: Shape): void {
+    public addShape(shape: Shape): void {
         const konvaShape = this.getKonvaShape(shape);
         this.layer.add(konvaShape);
     }
 
-    removeShape(shape: Shape): void {
+    public removeShape(shape: Shape): void {
         const konvaShape = this.getKonvaShape(shape);
 
         if (konvaShape.getParent() === this.layer) {
@@ -50,15 +50,15 @@ export class LayerImpl implements Layer {
         }
     }
 
-    draw(): void {
+    public draw(): void {
         this.layer.draw();
     }
 
-    batchDraw(): void {
+    public batchDraw(): void {
         this.layer.batchDraw();
     }
     
-    on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
+    public on<K extends keyof EventKeyMap>(type: K, callback: (event: EventKeyMap[K]) => void): void {
         if (!this.callbacks.has(type))
             this.callbacks.set(type, []);
         const callbacks: Array<(event: EventKeyMap[K]) => void> = this.callbacks.get(type)!;
@@ -80,12 +80,12 @@ export class LayerImpl implements Layer {
         }
     }
 
-    off<K extends keyof EventKeyMap>(type: K): void {
+    public off<K extends keyof EventKeyMap>(type: K): void {
         this.layer.off(type);
         this.callbacks.delete(type);
     }
 
-    processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public processEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
         const callbacks = this.callbacks.get(type);
         
         const newEvent = {
@@ -103,13 +103,13 @@ export class LayerImpl implements Layer {
         this.dispatchEvent(type, event);
     }
 
-    addListener(listener: Listener): void {
+    public addListener(listener: Listener): void {
         if (!this.listeners.includes(listener)) {
             this.listeners.push(listener);
         }
     }
 
-    dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
+    public dispatchEvent<K extends keyof EventKeyMap>(type: K, event: EventKeyMap[K]): void {
 
         if (event.cancel) {
             return;
