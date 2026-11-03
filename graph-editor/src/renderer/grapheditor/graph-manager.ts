@@ -1,7 +1,7 @@
 import { Vertex } from './vertex';
 import { Edge } from './edge';
 import { SemiEdge } from './semi-edge'; 
-import { ToolManager } from './tool-manager';
+import { ToolManager, ToolType } from './tool-manager';
 import * as Graphics from '../graphics/graphics-gateway';
 import { Canvas } from '../graphics/interface/canvas.interface';
 import { Layer } from '../graphics/interface/layer.interface';
@@ -10,6 +10,7 @@ import { LayerImpl } from '../graphics/implementation/layer-impl';
 export class GraphManager {
     private canvas: Canvas;
     private layer: Layer;
+    private containerElem: HTMLElement | null;
     
     private vertices: Vertex[] = [];
     private edges: Edge[] = [];
@@ -22,11 +23,11 @@ export class GraphManager {
     private edgeDirected: boolean = false;
     private edgeWeightValue: number = 1;
     
-    private activeTool: string = 'vertex'; 
+    private activeTool: ToolType = 'vertex'; 
 
     private nextVertexNumber: number = 1;
 
-    private vertexObservers: Map<number, (type: string, eventData: any) => void> = new Map();
+    private vertexObservers: Map<number, (type: string, eventData: { vertex: Vertex; x?: number; y?: number }) => void> = new Map();
 
     constructor(
         containerId: string, 
@@ -34,16 +35,47 @@ export class GraphManager {
         height: number, 
         private toolManager: ToolManager
     ) {
+        this.containerElem = document.getElementById(containerId);
         this.canvas = Graphics.createCanvas(containerId, width, height);
         this.layer = new LayerImpl();
         this.canvas.addLayer(this.layer);
         this.layer.draw();
 
-        this.toolManager.onToolChange((tool) => {
+        this.toolManager.onToolChange((tool: ToolType) => {
             this.setTool(tool);
         });
         
         this.activeTool = this.toolManager.getActiveTool();
+
+        this.bindEvents();
+    }
+
+    private bindEvents(): void {
+        this.canvas.on('click', async (event: { domEvent?: MouseEvent; evt?: MouseEvent }) => {
+            if (this.activeTool === 'vertex') {
+                const domEvent = event.domEvent || event.evt;
+                
+                if (domEvent && domEvent.clientX !== undefined && this.containerElem) {
+                    const rect = this.containerElem.getBoundingClientRect();
+                    const x = domEvent.clientX - rect.left;
+                    const y = domEvent.clientY - rect.top;
+                    
+                    await this.addVertex(x, y);
+                }
+            }
+        });
+
+        if (this.containerElem) {
+            this.containerElem.addEventListener('mousemove', (domEvent: MouseEvent) => {
+                if (this.activeTool === 'edge' && this.containerElem) {
+                    const rect = this.containerElem.getBoundingClientRect();
+                    const x = domEvent.clientX - rect.left;
+                    const y = domEvent.clientY - rect.top;
+                    
+                    this.updateSemiEdgePointer(x, y);
+                }
+            });
+        }
     }
 
     public getCanvas(): Canvas {
@@ -73,19 +105,17 @@ export class GraphManager {
         
         newVertex.setDraggable(this.activeTool === 'select');
         
-        const observerCallback = (type: string, eventData: any) => this.processEvent(type, eventData);
+        const observerCallback = (type: string, eventData: { vertex: Vertex; x?: number; y?: number }) => this.processEvent(type, eventData);
         this.vertexObservers.set(newVertex.getId(), observerCallback);
         newVertex.addObserver(observerCallback);
 
         this.vertices.push(newVertex);
         this.layer.batchDraw();
         
-        console.log(`Vertex created with ID ${newVertex.getId()} and label "${label}" at (${x}, ${y}). Total vertices: ${this.vertices.length}`);
-        
         return newVertex;
     }
 
-    public processEvent(type: string, eventData: any): void {
+    public processEvent(type: string, eventData: { vertex: Vertex; x?: number; y?: number }): void {
         if (type === 'CLICK') {
             this.handleVertexClick(eventData.vertex);
         } else if (type === 'DBLCLICK') {
@@ -97,7 +127,7 @@ export class GraphManager {
         }
     }
 
-    public setTool(tool: string): void {
+    public setTool(tool: ToolType): void {
         this.activeTool = tool;
         
         const isSelectMode = (tool === 'select');
@@ -109,8 +139,6 @@ export class GraphManager {
         if (tool !== 'edge') {
             this.disableEdgeCreation();
         }
-        
-        console.log(`GraphManager: Ferramenta ativa sincronizada via ToolManager -> ${tool}`);
     }
 
     private handleVertexClick(vertex: Vertex): void {
@@ -122,7 +150,6 @@ export class GraphManager {
         if (!this.isEdgeCreationActive) return;
 
         if (this.firstSelectedVertex === vertex) {
-            console.log('Cancelled edge creation: clicked on the same vertex.');
             this.firstSelectedVertex = null;
             this.cleanupSemiEdge();
             return;
@@ -133,12 +160,11 @@ export class GraphManager {
             this.cleanupSemiEdge();
             this.semiEdge = new SemiEdge(vertex.getX(), vertex.getY(), Graphics, this.edgeDirected, this.layer);
             this.layer.batchDraw();
-            console.log(`First vertex selected (ID: ${vertex.getId()}).`);
         } else {
-            console.log(`Second vertex selected (ID: ${vertex.getId()}). Creating edge...`);
-            this.addEdge(this.firstSelectedVertex, vertex);
-            this.cleanupSemiEdge();
+            const source = this.firstSelectedVertex;
             this.firstSelectedVertex = null;
+            this.cleanupSemiEdge();
+            this.addEdge(source, vertex);
         }
     }
 
@@ -224,7 +250,6 @@ export class GraphManager {
 
         this.reindexParallelEdges(sourceId, targetId);
         this.layer.batchDraw();
-        console.log(`Edge (ID: ${edgeId}) between ${sourceId} and ${targetId} deleted.`);
     }
 
     public async removeVertex(vertex: Vertex): Promise<void> {
@@ -259,7 +284,6 @@ export class GraphManager {
 
         this.vertices = this.vertices.filter(v => v !== vertex);
         this.layer.batchDraw();
-        console.log(`Vertex (ID: ${vertexId}) and its connected edges were deleted.`);
     }
 
     public reindexParallelEdges(v1Id: number, v2Id: number): void {

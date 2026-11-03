@@ -2,73 +2,80 @@ export type ToolType = 'select' | 'vertex' | 'edge' | 'eraser';
 
 export class ToolManager {
     private activeTool: ToolType = 'vertex';
-    private listeners: ((tool: ToolType) => void)[] = [];
+    private toolChangeCallbacks: Array<(tool: ToolType) => void> = [];
+
+    private toolButtons: Map<ToolType, HTMLButtonElement | null> = new Map();
+    private currentToolButton: HTMLButtonElement | null = null;
 
     constructor() {}
 
-    public setTool(tool: ToolType): void {
-        if (this.activeTool === tool) return;
-        this.activeTool = tool;
-        this.notifyListeners();
+    public init(): void {
+        this.toolButtons.set('select', document.getElementById('btn-select-tool') as HTMLButtonElement);
+        this.toolButtons.set('vertex', document.getElementById('btn-vertex-tool') as HTMLButtonElement);
+        this.toolButtons.set('edge', document.getElementById('btn-edge-tool') as HTMLButtonElement);
+        this.toolButtons.set('eraser', document.getElementById('btn-erase-tool') as HTMLButtonElement);
+
+        this.bindEvents();
+    }
+
+    private bindEvents(): void {
+        this.toolButtons.forEach((btn, tool) => {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    if (tool === 'edge' && this.activeTool === 'edge') {
+                        this.setTool('select');
+                    } else {
+                        this.setTool(tool);
+                    }
+                });
+            }
+        });
+
+        window.addEventListener('keydown', (e: KeyboardEvent) => {
+            const activeElem = document.activeElement as HTMLElement;
+            if (activeElem && ['INPUT', 'TEXTAREA'].includes(activeElem.tagName)) return;
+
+            const key = e.key.toLowerCase();
+            if (key === 's') this.setTool('select');
+            else if (key === 'v') this.setTool('vertex');
+            else if (key === 'e') this.setTool('edge');
+            else if (key === 'r') this.setTool('eraser');
+        });
     }
 
     public getActiveTool(): ToolType {
         return this.activeTool;
     }
 
+    public setTool(tool: ToolType): void {
+        this.activeTool = tool;
+        
+        const targetBtn = this.toolButtons.get(tool) || null;
+        this.setActiveToolButton(targetBtn);
+
+        this.notifyToolChange();
+    }
+
+    private setActiveToolButton(btn: HTMLButtonElement | null): void {
+        if (!btn) return;
+        
+        if (this.currentToolButton) {
+            this.currentToolButton.setAttribute('data-selected', 'false');
+        }
+        
+        btn.setAttribute('data-selected', 'true');
+        this.currentToolButton = btn;
+    }
+
     public onToolChange(callback: (tool: ToolType) => void): void {
-        this.listeners.push(callback);
+        this.toolChangeCallbacks.push(callback);
     }
 
-    private notifyListeners(): void {
-        this.listeners.forEach(callback => callback(this.activeTool));
-    }
-
-    public init(): void {
-        const toolButtons: { ids: string[]; tool: ToolType }[] = [
-            { ids: ['btn-select', 'btn-select-tool'], tool: 'select' },
-            { ids: ['btn-vertex', 'btn-vertex-tool'], tool: 'vertex' },
-            { ids: ['btn-edge', 'btn-edge-tool'], tool: 'edge' },
-            { ids: ['btn-eraser', 'btn-erase-tool'], tool: 'eraser' }
-        ];
-
-        toolButtons.forEach(({ ids, tool }) => {
-            ids.forEach(id => {
-                const buttonElement = document.getElementById(id);
-                if (buttonElement) {
-                    buttonElement.addEventListener('click', () => {
-                        this.setTool(tool);
-                        console.log(`Ferramenta ativada via clique: ${tool}`);
-                    });
-                }
-            });
-        });
-
-        window.addEventListener('keydown', (e: KeyboardEvent) => {
-            const activeElem = document.activeElement as HTMLElement;
-            if (activeElem && ['INPUT', 'TEXTAREA'].includes(activeElem.tagName)) {
-                return;
-            }
-
-            const key = e.key.toLowerCase();
-            switch (key) {
-                case 's': 
-                    this.setTool('select'); 
-                    console.log('Atalho [S]: select');
-                    break;
-                case 'v': 
-                    this.setTool('vertex'); 
-                    console.log('Atalho [V]: vertex');
-                    break;
-                case 'e': 
-                    this.setTool('edge'); 
-                    console.log('Atalho [E]: edge');
-                    break;
-                case 'r': 
-                    this.setTool('eraser'); 
-                    console.log('Atalho [R]: eraser');
-                    break;
-            }
-        });
+    private notifyToolChange(): void {
+        for (const callback of this.toolChangeCallbacks) {
+            callback(this.activeTool);
+        }
     }
 }

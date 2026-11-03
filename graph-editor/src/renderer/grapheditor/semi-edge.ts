@@ -10,7 +10,7 @@ export class SemiEdge {
     constructor(
         private startX: number,
         private startY: number,
-        private graphicsGateway: any,
+        private graphicsGateway: { createLine: (points: Vector2[]) => LineShape },
         private directed: boolean = false,
         private layer: Layer
     ) {
@@ -47,11 +47,20 @@ export class SemiEdge {
             startYOffset = this.startY + uy * radius;
         }
 
+        let endX = x;
+        let endY = y;
+        if (distance > 5) {
+            const ux = dx / distance;
+            const uy = dy / distance;
+            endX = x - ux * 5;
+            endY = y - uy * 5;
+        }
+
         const pts: Vector2[] = [new Vector2(startXOffset, startYOffset)];
         for (const cp of this.controlPoints) {
             pts.push(new Vector2(cp.x, cp.y));
         }
-        pts.push(new Vector2(x, y));
+        pts.push(new Vector2(endX, endY));
 
         this.lineShape.setPoints(pts);
         this.layer.batchDraw();

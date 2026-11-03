@@ -28,20 +28,28 @@ export class Vertex {
         this.circleShape = Graphics.createCircle(x, y, 25);
         this.textShape = Graphics.createText(x - 15, y - 7, this.label, 14);
 
+        this.textShape.setListening(false);
+
         this.configureStyle(Theme.getCurrentThemeColors());
 
         this.layer.addShape(this.circleShape);
         this.layer.addShape(this.textShape);
 
         let lastClickTime = 0;
-        this.circleShape.on('click', () => {
+        const handleCircleClick = () => {
             const now = Date.now();
             if (now - lastClickTime < 150) return;
             lastClickTime = now;
             this.dispatchEvent('CLICK', { vertex: this });
+        };
+
+        this.circleShape.on('click', handleCircleClick);
+        this.circleShape.on('dblclick', () => {
+            this.dispatchEvent('DBLCLICK', { vertex: this });
         });
 
-        this.circleShape.on('dblclick', () => {
+        this.textShape.on('click', handleCircleClick);
+        this.textShape.on('dblclick', () => {
             this.dispatchEvent('DBLCLICK', { vertex: this });
         });
 

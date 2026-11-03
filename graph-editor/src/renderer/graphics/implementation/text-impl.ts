@@ -186,6 +186,10 @@ export class TextImpl implements Text {
         this.konvaText.height(height);
     }
 
+    setListening(listening: boolean): void {
+        this.konvaText.listening(listening);
+    }
+
     getKonvaShape(): Konva.Text {
         return this.konvaText;
     }

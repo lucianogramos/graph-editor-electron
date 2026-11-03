@@ -48,68 +48,13 @@ editorElem.addEventListener('auxclick', (e: MouseEvent) => {
     if (e.button === 1) e.preventDefault();
 });
 
-canvas.on('click', async (event: any) => {
-    if (toolManager.getActiveTool() === 'vertex') {
-        const domEvent = event.domEvent || event.evt || event;
-        
-        if (domEvent && domEvent.clientX !== undefined) {
-            const rect = editorElem.getBoundingClientRect();
-            const x = domEvent.clientX - rect.left;
-            const y = domEvent.clientY - rect.top;
-            
-            await graphManager.addVertex(x, y);
-        }
-    }
-});
-
-editorElem.addEventListener('mousemove', (domEvent: MouseEvent) => {
-    if (toolManager.getActiveTool() === 'edge') {
-        const rect = editorElem.getBoundingClientRect();
-        const x = domEvent.clientX - rect.left;
-        const y = domEvent.clientY - rect.top;
-        
-        graphManager.updateSemiEdgePointer(x, y);
-    }
-});
-
-const btnSelect = (document.getElementById('btn-select-tool') || document.getElementById('btn-select')) as HTMLButtonElement;        
-const btnAddVertex = (document.getElementById('btn-vertex-tool') || document.getElementById('btn-vertex')) as HTMLButtonElement;    
-const btnAddEdge = (document.getElementById('btn-edge-tool') || document.getElementById('btn-edge')) as HTMLButtonElement;
-const btnEraser = (document.getElementById('btn-erase-tool') || document.getElementById('btn-eraser')) as HTMLButtonElement;
-
-let currentToolButton: HTMLButtonElement | null = btnAddVertex;
-
-function setActiveToolButton(btn: HTMLButtonElement | null) {
-    if (!btn) return;
-    if (currentToolButton) {
-        currentToolButton.setAttribute('data-selected', 'false');
-    }
-    btn.setAttribute('data-selected', 'true');
-    currentToolButton = btn;
-}
-
-if (btnAddEdge) {
-    btnAddEdge.addEventListener('click', (e) => {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-
-        const currentTool = toolManager.getActiveTool();
-        if (currentTool !== 'edge') {
-            toolManager.setTool('edge');
-            updateEdgeParameters();
-        } else {
-            toolManager.setTool('select');
-        }
-    }, true);
-}
-
 let edgeTypeSelected = false;
 let edgeWeightSelected = false;
 
-const edgeDirectedButton = document.querySelector('button[data-value="directed"]') as HTMLButtonElement;
-const edgeUndirectedButton = document.querySelector('button[data-value="undirected"]') as HTMLButtonElement;
-const edgeWeightedButton = document.querySelector('button[data-value="weighted"]') as HTMLButtonElement;
-const edgeUnweightedButton = document.querySelector('button[data-value="unweighted"]') as HTMLButtonElement;
+const edgeDirectedButton = document.getElementById('edge-directed-option') as HTMLButtonElement;
+const edgeUndirectedButton = document.getElementById('edge-undirected-option') as HTMLButtonElement;
+const edgeWeightedButton = document.getElementById('edge-weighted-option') as HTMLButtonElement;
+const edgeUnweightedButton = document.getElementById('edge-unweighted-option') as HTMLButtonElement;
 
 if (edgeDirectedButton && edgeUndirectedButton) {
     edgeDirectedButton.addEventListener('click', () => {
@@ -181,17 +126,9 @@ function updateEdgeParameters() {
 }
 
 toolManager.onToolChange((tool: ToolType) => {
-    graphManager.setTool(tool);
-
-    if (tool === 'select') setActiveToolButton(btnSelect);
-    else if (tool === 'vertex') setActiveToolButton(btnAddVertex);
-    else if (tool === 'edge') setActiveToolButton(btnAddEdge);
-    else if (tool === 'eraser') setActiveToolButton(btnEraser);
-
     if (tool === 'edge') {
         updateEdgeParameters();
     } else {
-        graphManager.disableEdgeCreation();
         if (weightInputContainer) {
             weightInputContainer.classList.remove('flex');
             weightInputContainer.classList.add('hidden');
@@ -200,4 +137,3 @@ toolManager.onToolChange((tool: ToolType) => {
 });
 
 toolManager.setTool('vertex');
-setActiveToolButton(btnAddVertex);

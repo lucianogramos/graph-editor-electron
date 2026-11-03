@@ -34,4 +34,5 @@ export interface Text extends Shape {
     setWrap(wrap: string): void;
     setWidth(width: number): void;
     setHeight(height: number): void;
+    setListening(listening: boolean): void;
 }
