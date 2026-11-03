@@ -5,8 +5,14 @@ import { Layer } from '../graphics/interface/layer.interface';
 import * as Theme from '../theme';
 import { ThemeColors } from '../../types/ipc';
 
+export interface VertexEventData {
+    vertex: Vertex;
+    x?: number;
+    y?: number;
+}
+
 export class Vertex {
-    private observers: Array<(type: string, eventData: any) => void> = [];
+    private observers: Array<(type: string, eventData: VertexEventData) => void> = [];
     private label: string;
     private isDraggable: boolean = false;
     
@@ -15,6 +21,7 @@ export class Vertex {
 
     private onChangeThemeId: number = -1;
     private activeInput: HTMLInputElement | null = null;
+    private lastClickTime: number = 0;
 
     constructor(
         private x: number,
@@ -28,28 +35,23 @@ export class Vertex {
         this.circleShape = Graphics.createCircle(x, y, 25);
         this.textShape = Graphics.createText(x - 15, y - 7, this.label, 14);
 
-        this.textShape.setListening(false);
-
         this.configureStyle(Theme.getCurrentThemeColors());
 
         this.layer.addShape(this.circleShape);
         this.layer.addShape(this.textShape);
 
-        let lastClickTime = 0;
-        const handleCircleClick = () => {
-            const now = Date.now();
-            if (now - lastClickTime < 150) return;
-            lastClickTime = now;
-            this.dispatchEvent('CLICK', { vertex: this });
-        };
+        this.bindEvents();
+    }
 
-        this.circleShape.on('click', handleCircleClick);
-        this.circleShape.on('dblclick', () => {
-            this.dispatchEvent('DBLCLICK', { vertex: this });
+    private bindEvents(): void {
+        this.circleShape.on('click', () => {
+            const now = Date.now();
+            if (now - this.lastClickTime < 150) return;
+            this.lastClickTime = now;
+            this.dispatchEvent('CLICK', { vertex: this });
         });
 
-        this.textShape.on('click', handleCircleClick);
-        this.textShape.on('dblclick', () => {
+        this.circleShape.on('dblclick', () => {
             this.dispatchEvent('DBLCLICK', { vertex: this });
         });
 
@@ -117,7 +119,7 @@ export class Vertex {
     public openInlineEdit(): void {
         if (this.activeInput) return;
 
-        const container = document.getElementById('editor') || document.body;
+        const container = document.getElementById('editor') as HTMLElement || document.body;
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -171,15 +173,15 @@ export class Vertex {
         input.style.top = `${this.y - 12}px`;
     }
 
-    public addObserver(callback: (type: string, eventData: any) => void): void {
+    public addObserver(callback: (type: string, eventData: VertexEventData) => void): void {
         this.observers.push(callback);
     }
 
-    public removeObserver(callback: (type: string, eventData: any) => void): void {
+    public removeObserver(callback: (type: string, eventData: VertexEventData) => void): void {
         this.observers = this.observers.filter(obs => obs !== callback);
     }
 
-    public dispatchEvent(type: string, eventData: any): void {
+    public dispatchEvent(type: string, eventData: VertexEventData): void {
         for (const callback of this.observers) {
             callback(type, eventData);
         }
@@ -209,10 +211,10 @@ export class Vertex {
         this.textShape.setWidth(30);
 
         this.onChangeThemeId = Theme.onChangeTheme((theme) => {
-            const colors = theme.colors;
-            this.circleShape.fill(colors.vertexColor);
-            this.circleShape.border(1, colors.vertexBorderColor);
-            this.textShape.fill(colors.vertexLabelColor);
+            const themeColors = theme.colors;
+            this.circleShape.fill(themeColors.vertexColor);
+            this.circleShape.border(1, themeColors.vertexBorderColor);
+            this.textShape.fill(themeColors.vertexLabelColor);
         });
     }
 }

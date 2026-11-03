@@ -4,13 +4,14 @@ import { Vector2 } from "../vector2";
 import { Direction, Text } from "../interface/text.interface"; 
 import { Listener } from "../interface/listener.interface";
 import { EventKeyMap } from "../interface/event-key-map.interface"; 
+import { FastLayer } from "konva/lib/FastLayer";
 
 export class TextImpl implements Text {
     private konvaText: Konva.Text;
     private callbacks: Map<string, Array<<K extends keyof EventKeyMap>(event: EventKeyMap[K]) => void>> = new Map();
     private listeners: Listener[] = [];
 
-    constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr") {
+    constructor(x: number, y: number, text: string, fontSize: number = 16, fontFamily: string = "Arial", fill: string = "black", draggable: boolean = false, direction: Direction = "ltr", listening: boolean = false) {
         this.konvaText = new Konva.Text({
             x: x,
             y: y,
@@ -19,7 +20,8 @@ export class TextImpl implements Text {
             fontFamily: fontFamily,
             fill: fill,
             draggable: draggable,
-            direction: direction
+            direction: direction,
+            listening: false
         });
     }
 
@@ -184,10 +186,6 @@ export class TextImpl implements Text {
 
     setHeight(height: number): void {
         this.konvaText.height(height);
-    }
-
-    setListening(listening: boolean): void {
-        this.konvaText.listening(listening);
     }
 
     getKonvaShape(): Konva.Text {
